@@ -6,6 +6,9 @@ import toast from "react-hot-toast";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { TicketUploader, type UploadedFile } from "./TicketUploader";
 import { sendExpenseWebhook } from "@/lib/n8n/sendExpenseWebhook";
+import type { Enums } from "@/types/database";
+
+type ExpenseCategory = Enums<"expense_category">;
 
 const CATEGORIES = [
   { value: "transport",       label: "Transporte"        },
@@ -40,7 +43,7 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
   const supabase = createSupabaseBrowserClient();
 
   const [filesUploaded, setFilesUploaded] = useState<UploadedFile[]>([]);
-  const [categoria,   setCategoria]  = useState<string>("transport");
+  const [categoria,   setCategoria]  = useState<ExpenseCategory>("transport");
   const [descripcion, setDescripcion] = useState("");
   const [moneda,      setMoneda]      = useState<string>("UYU");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -85,7 +88,6 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
     const { data: expense, error: expenseError } = await supabase
       .from("expenses")
       .insert({
-        id:                   crypto.randomUUID(),
         report_id:            reportId,
         user_id:              session.user.id,
         category:             categoria,
