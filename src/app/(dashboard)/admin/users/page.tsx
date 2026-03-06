@@ -107,7 +107,15 @@ export default async function AdminUsersPage({
     .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email, role: u.role }));
 
   const supervisors = userList.filter((u) => u.role === "supervisor");
-  const viewers     = userList.filter((u) => u.role === "chusmas");
+  const viewers     = (rawUsers ?? []).filter((u) => u.role === "chusmas");
+
+  // Para chusmas: empleados asignables = todos los usuarios (sin filtrar por país) menos el propio chusmas
+  const allUsersForViewerAssign = (rawUsers ?? []).map((u) => ({
+    id: u.id,
+    full_name: u.full_name,
+    email: u.email,
+    role: u.role,
+  }));
 
   return (
     <div className="space-y-6">
@@ -308,14 +316,7 @@ export default async function AdminUsersPage({
           <div className="grid gap-4 sm:grid-cols-2">
             {viewers.map((viewer) => {
               const myAssignments = assignmentsByViewer[viewer.id] ?? [];
-              const others = userList.filter((u) => u.id !== viewer.id);
-              const available = others.map((u) => ({
-                id: u.id,
-                full_name: u.full_name,
-                email: u.email,
-                role: u.role,
-              }));
-
+              const available = allUsersForViewerAssign.filter((u) => u.id !== viewer.id);
               return (
                 <div key={viewer.id} className="card p-4 space-y-3 border-l-4 border-gray-300">
                   <div className="flex items-center gap-3">
@@ -336,6 +337,7 @@ export default async function AdminUsersPage({
                       viewerName={viewer.full_name}
                       initialAssignments={myAssignments}
                       availableEmployees={available}
+                      assignedByUserId={session.user.id}
                     />
                   </div>
                 </div>

@@ -23,6 +23,8 @@ interface Props {
   viewerName: string;
   initialAssignments: Assignment[];
   availableEmployees: UserOption[];
+  /** ID del admin que asigna (para assigned_by) */
+  assignedByUserId?: string;
 }
 
 export function ViewerAssigner({
@@ -30,6 +32,7 @@ export function ViewerAssigner({
   viewerName,
   initialAssignments,
   availableEmployees,
+  assignedByUserId,
 }: Props) {
   const supabase = createSupabaseBrowserClient();
   const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
@@ -43,7 +46,11 @@ export function ViewerAssigner({
     setSaving(true);
     const { data, error } = await supabase
       .from('viewer_assignments')
-      .insert({ viewer_id: viewerId, employee_id: emp.id })
+      .insert({
+        viewer_id: viewerId,
+        employee_id: emp.id,
+        ...(assignedByUserId && { assigned_by: assignedByUserId }),
+      })
       .select('id')
       .single();
     setSaving(false);

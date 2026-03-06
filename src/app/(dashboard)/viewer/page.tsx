@@ -23,27 +23,46 @@ export default async function ViewerHomePage() {
     .single();
   if (me?.role !== "chusmas" && me?.role !== "admin") redirect("/dashboard");
 
-  // Get employees this viewer can see
+  // Get employees this viewer can see (IDs from assignments, then fetch profiles separately)
   const { data: assignments } = await supabase
     .from("viewer_assignments")
-    .select("employee_id, profiles!viewer_assignments_employee_id_fkey(id, full_name, email, role, department)")
+    .select("employee_id")
     .eq("viewer_id", session.user.id);
 
-  const employees =
-    (assignments ?? [])
-      .map(
-        (a) =>
-          a.profiles as {
-            id: string;
-            full_name: string;
-            email: string;
-            role: string;
-            department: string | null;
-          } | null,
-      )
-      .filter(Boolean) ?? [];
+  const employeeIds = (assignments ?? []).map((a) => a.employee_id as string).filter(Boolean);
 
-  if (employees.length === 0) {
+  if (employeeIds.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="page-title">Ver rendiciones</h1>
+          <p className="page-subtitle">Empleados asignados para solo lectura.</p>
+        </div>
+        <div className="card p-10 text-center space-y-2">
+          <p className="text-2xl">👀</p>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            No tenés empleados asignados aún. El administrador debe asignarte qué rendiciones podés ver.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { data: employees } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, role, department")
+    .in("id", employeeIds);
+
+  const employeeList =
+    (employees ?? []) as Array<{
+      id: string;
+      full_name: string;
+      email: string;
+      role: string;
+      department: string | null;
+    }>;
+
+  if (employeeList.length === 0) {
     return (
       <div className="space-y-4">
         <div>
@@ -61,7 +80,6 @@ export default async function ViewerHomePage() {
   }
 
   // Get reports for all viewable employees
-  const employeeIds = employees.map((e) => e.id);
   const { data: reports } = await supabase
     .from("weekly_reports")
     .select("id, title, week_start, week_end, status, user_id, expenses(id, status)")
@@ -85,7 +103,7 @@ export default async function ViewerHomePage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {employees.map((emp) => {
+        {employeeList.map((emp) => {
           const empReports = reportsByEmployee[emp.id] ?? [];
           const openReports = empReports.filter((r) => r.status === "open").length;
           const pendingExpenses = empReports.flatMap((r) =>
