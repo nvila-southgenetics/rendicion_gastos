@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { ExpenseAdminActions } from "@/components/expenses/ExpenseAdminActions";
+import { CloseReportButton } from "@/components/reports/CloseReportButton";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -106,18 +107,34 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Status + budget */}
+      {/* Status + budget + acciones de supervisor */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-          report.status === "open" ? "bg-emerald-100 text-emerald-700" : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
+            report.status === "open"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+          }`}
+        >
           {report.status === "open" ? "Abierta" : "Cerrada"}
         </span>
         {budgetMax && (
-          <span className={`text-xs font-semibold ${budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"}`}>
+          <span
+            className={`text-xs font-semibold ${
+              budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
+            }`}
+          >
             Presupuesto: {totalUSD !== null ? `USD ${fmt(totalUSD)}` : "—"} / USD {fmt(budgetMax)}
             {budgetOverrun && " ⚠ Excedido"}
           </span>
+        )}
+        {report.status === "open" && (
+          <div className="ml-auto">
+            <CloseReportButton
+              reportId={report.id}
+              currentStatus={report.status as "open" | "closed"}
+            />
+          </div>
         )}
       </div>
 

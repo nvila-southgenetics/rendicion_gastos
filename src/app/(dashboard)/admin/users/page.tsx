@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserRoleEditor } from "@/components/admin/UserRoleEditor";
 import { SupervisionAssigner } from "@/components/admin/SupervisionAssigner";
+import { DeleteUserButton } from "@/components/admin/DeleteUserButton";
 
 const ROLE_LABELS: Record<string, string> = {
   employee:   "Empleado",
@@ -92,6 +93,7 @@ export default async function AdminUsersPage() {
                 <th className="px-4 py-3 font-medium">Departamento</th>
                 <th className="px-4 py-3 font-medium">Supervisado por</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -142,6 +144,13 @@ export default async function AdminUsersPage() {
                         {user.is_active !== false ? "Activo" : "Inactivo"}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-right align-middle">
+                      <DeleteUserButton
+                        userId={user.id}
+                        fullName={user.full_name}
+                        isCurrentUser={user.id === session.user.id}
+                      />
+                    </td>
                   </tr>
                 );
               })}
@@ -176,6 +185,13 @@ export default async function AdminUsersPage() {
                     Supervisado por: {supervisorNames.join(", ")}
                   </p>
                 )}
+                <div className="pt-1">
+                  <DeleteUserButton
+                    userId={user.id}
+                    fullName={user.full_name}
+                    isCurrentUser={user.id === session.user.id}
+                  />
+                </div>
               </div>
             );
           })}

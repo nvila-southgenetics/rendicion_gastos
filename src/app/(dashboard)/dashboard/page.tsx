@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
+import { OpenReportCard } from "@/components/dashboard/OpenReportCard";
 import type { Tables } from "@/types/database";
 
 type Expense      = Tables<"expenses">;
@@ -59,41 +60,13 @@ export default async function DashboardPage() {
 
       {/* Rendición abierta activa */}
       {openReport ? (
-        <Link
-          href={`/dashboard/reports/${openReport.id}`}
-          className="card flex items-center justify-between gap-4 p-4 active:scale-[0.98] transition-transform"
-        >
-          <div>
-            <p className="text-[0.7rem] font-semibold uppercase text-[var(--color-text-muted)]">
-              Rendición activa
-            </p>
-            {openReport.title && (
-              <p className="mt-0.5 text-base font-bold text-[var(--color-text-primary)]">
-                {openReport.title}
-              </p>
-            )}
-            <p className={`${openReport.title ? "text-sm" : "mt-0.5 text-lg font-bold"} text-[var(--color-primary)]`}>
-              {totalOpen !== null
-                ? `$ ${totalOpen.toLocaleString("es-UY", { minimumFractionDigits: 2 })} UYU`
-                : "Sin gastos aún"}
-            </p>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              {new Date(openReport.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-              {" – "}
-              {new Date(openReport.week_end + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <span className="badge bg-emerald-100 text-emerald-700">Abierta</span>
-            <Link
-              href={`/dashboard/expenses/new?reportId=${openReport.id}`}
-              className="btn-primary text-xs py-2 px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              + Gasto
-            </Link>
-          </div>
-        </Link>
+        <OpenReportCard
+          reportId={openReport.id}
+          title={openReport.title}
+          totalOpen={totalOpen}
+          weekStart={openReport.week_start}
+          weekEnd={openReport.week_end}
+        />
       ) : (
         <div className="card flex items-center justify-between gap-4 p-4">
           <div>
