@@ -97,8 +97,8 @@ export default async function ViewerHomePage() {
       <div>
         <h1 className="page-title">Ver rendiciones</h1>
         <p className="page-subtitle">
-          Podés ver las rendiciones de {employees.length}{" "}
-          {employees.length === 1 ? "persona asignada" : "personas asignadas"}.
+          Podés ver las rendiciones de {employeeList.length}{" "}
+          {employeeList.length === 1 ? "persona asignada" : "personas asignadas"}.
         </p>
       </div>
 
