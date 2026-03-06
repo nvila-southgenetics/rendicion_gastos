@@ -196,7 +196,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
             {hasFiles ? "Agregar más fotos de comprobantes" : "Arrastrá fotos de comprobantes aquí"}
           </p>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-            Solo fotos (JPG, PNG, WEBP) · máx. 10 MB por foto
+            Solo fotos (JPG, PNG, WEBP) · máx. 10 MB por foto · podés tomar una foto o elegir desde la galería
           </p>
         </div>
 
@@ -210,7 +210,6 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
             type="file"
             accept="image/*"
             multiple
-            capture="environment"
             className="hidden"
             onChange={(e) => handleFilesSelected(e.target.files)}
             disabled={uploadingCount > 0}
