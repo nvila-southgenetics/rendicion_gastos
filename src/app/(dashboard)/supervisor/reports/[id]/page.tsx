@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import { ExpenseAdminActions } from "@/components/expenses/ExpenseAdminActions";
 import { CloseReportButton } from "@/components/reports/CloseReportButton";
 import { NotifyReviewButton } from "@/components/reports/NotifyReviewButton";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
@@ -185,68 +184,75 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
 
       {/* Expense list */}
       <div className="card overflow-hidden">
-        <div className="border-b border-[#f0ecf4] px-4 py-3">
+        <div className="border-b border-[#f0ecf4] px-4 py-3 space-y-1">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Gastos ({expenseList.length})
           </h2>
+          {expenseList.length > 0 && (
+            <p className="text-[0.7rem] text-[var(--color-text-muted)]">
+              Hacé clic en cualquier gasto para ver el detalle completo (imagen del comprobante, comentarios, etc.).
+            </p>
+          )}
         </div>
 
         {expenseList.length > 0 ? (
           <div className="divide-y divide-[#f0ecf4]">
             {expenseList.map((expense) => {
-              const usdAmount = toUSD(Number(expense.amount), expense.currency ?? "UYU", effectiveRates);
-              const isUSD     = (expense.currency ?? "UYU") === "USD";
+              const usdAmount = toUSD(
+                Number(expense.amount),
+                expense.currency ?? "UYU",
+                effectiveRates,
+              );
+              const isUSD = (expense.currency ?? "UYU") === "USD";
               return (
-                <div key={expense.id} className="p-4 hover:bg-[#fdfbff] transition-colors">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {expense.description}
-                        </span>
-                        <ExpenseStatusBadge status={expense.status ?? "pending"} />
-                      </div>
-                      <Link
-                        href={`/dashboard/expenses/${expense.id}`}
-                        className="inline-block text-[0.65rem] font-medium text-[var(--color-primary)] underline underline-offset-2"
-                      >
-                        Ver detalle del gasto (imagen y más)
-                      </Link>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
-                        {expense.expense_date && (
-                          <span>{new Date(expense.expense_date + "T12:00:00").toLocaleDateString("es-UY")}</span>
-                        )}
-                        <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
-                      </div>
-                      <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
-                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                          {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
-                        </span>
-                        {!isUSD && usdAmount !== null && (
-                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
-                            ≈ USD {fmt(usdAmount)}
+                <Link
+                  key={expense.id}
+                  href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/supervisor/reports/${report.id}`}
+                  className="block hover:bg-[#fdfbff] transition-colors"
+                >
+                  <div className="p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {expense.description}
                           </span>
+                          <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
+                          {expense.expense_date && (
+                            <span>
+                              {new Date(
+                                expense.expense_date + "T12:00:00",
+                              ).toLocaleDateString("es-UY")}
+                            </span>
+                          )}
+                          <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
+                        </div>
+                        <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+                          <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                            {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
+                          </span>
+                          {!isUSD && usdAmount !== null && (
+                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
+                              ≈ USD {fmt(usdAmount)}
+                            </span>
+                          )}
+                        </div>
+                        {expense.rejection_reason && (
+                          <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                            Motivo de rechazo: {expense.rejection_reason}
+                          </p>
+                        )}
+                        {expense.admin_notes && expense.status === "reviewing" && (
+                          <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                            Nota: {expense.admin_notes}
+                          </p>
                         )}
                       </div>
-                      {expense.rejection_reason && (
-                        <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
-                          Motivo de rechazo: {expense.rejection_reason}
-                        </p>
-                      )}
-                      {expense.admin_notes && expense.status === "reviewing" && (
-                        <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
-                          Nota: {expense.admin_notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0">
-                      <ExpenseAdminActions
-                        expenseId={expense.id}
-                        currentStatus={expense.status ?? "pending"}
-                      />
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

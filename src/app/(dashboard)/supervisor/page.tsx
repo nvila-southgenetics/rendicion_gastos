@@ -78,7 +78,11 @@ export default async function SupervisorHomePage() {
           ).length;
 
           return (
-            <div key={emp.id} className="card p-4 space-y-3">
+            <Link
+              key={emp.id}
+              href={`/dashboard/supervisor/employee/${emp.id}`}
+              className="card p-4 space-y-3 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
+            >
               {/* Employee header */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-purple-700">
@@ -114,36 +118,12 @@ export default async function SupervisorHomePage() {
               {/* Recent reports */}
               {empReports.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">Rendiciones recientes</p>
-                  {empReports.slice(0, 3).map((r) => {
-                    const startDate = new Date(r.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" });
-                    const endDate   = new Date(r.week_end   + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" });
-                    const expCount  = (r.expenses as Array<{ id: string }> ?? []).length;
-                    return (
-                      <Link
-                        key={r.id}
-                        href={`/dashboard/supervisor/reports/${r.id}`}
-                        className="flex items-center justify-between rounded-lg border border-[#f0ecf4] bg-[#fdfbff] px-3 py-2 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
-                            {r.title ?? `${startDate} – ${endDate}`}
-                          </p>
-                          <p className="text-[0.6rem] text-[var(--color-text-muted)]">{expCount} gasto{expCount !== 1 ? "s" : ""}</p>
-                        </div>
-                        <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${
-                          r.status === "open" ? "bg-emerald-100 text-emerald-700" : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-                        }`}>
-                          {r.status === "open" ? "Abierta" : "Cerrada"}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                  {empReports.length > 3 && (
-                    <p className="text-center text-[0.65rem] text-[var(--color-text-muted)]">
-                      +{empReports.length - 3} más
-                    </p>
-                  )}
+                  <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">
+                    Rendiciones recientes
+                  </p>
+                  <p className="text-[0.65rem] text-[var(--color-text-muted)]">
+                    {empReports.length} en total, {openReports} abiertas, {pendingExpenses} gastos pendientes.
+                  </p>
                 </div>
               )}
 
@@ -152,7 +132,7 @@ export default async function SupervisorHomePage() {
                   Sin rendiciones aún.
                 </p>
               )}
-            </div>
+            </Link>
           );
         })}
       </div>

@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import type { Tables } from "@/types/database";
+import { SupervisorExpenseActions } from "@/components/expenses/SupervisorExpenseActions";
+import type { Tables, TablesUpdate } from "@/types/database";
 
 type Expense = Tables<"expenses">;
 
@@ -19,10 +20,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 interface ExpenseDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }
 
-export default async function ExpenseDetailPage({ params }: ExpenseDetailPageProps) {
+export default async function ExpenseDetailPage({ params, searchParams }: ExpenseDetailPageProps) {
   const { id } = await params;
+  const query = await searchParams;
+  const returnTo = query.returnTo ?? "/dashboard/expenses";
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -31,16 +35,24 @@ export default async function ExpenseDetailPage({ params }: ExpenseDetailPagePro
 
   if (!session) return null;
 
-  const { data: expense } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: me }, { data: expense }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, role, full_name, email")
+      .eq("id", session.user.id)
+      .single(),
+    supabase
+      .from("expenses")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle(),
+  ]);
 
   if (!expense) notFound();
 
   const e = expense as Expense;
-  const canEdit = e.status === "pending";
+  const canEditOwn = e.status === "pending" && e.user_id === session.user.id;
+  const isSupervisor = me?.role === "supervisor" || me?.role === "admin";
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -52,7 +64,7 @@ export default async function ExpenseDetailPage({ params }: ExpenseDetailPagePro
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <ExpenseStatusBadge status={e.status ?? "pending"} />
-          {canEdit && (
+          {canEditOwn && (
             <Link
               href={`/dashboard/expenses/${e.id}/edit`}
               className="btn-primary text-sm"
@@ -62,6 +74,14 @@ export default async function ExpenseDetailPage({ params }: ExpenseDetailPagePro
           )}
         </div>
       </div>
+
+      {isSupervisor && (
+        <SupervisorExpenseActions
+          expenseId={e.id}
+          currentStatus={(e.status ?? "pending") as "pending" | "approved" | "rejected" | "reviewing"}
+          updateStatus={updateExpenseStatusAction}
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-[1fr,1fr]">
         {/* Datos del gasto */}
@@ -143,15 +163,156 @@ export default async function ExpenseDetailPage({ params }: ExpenseDetailPagePro
 
       <div className="flex gap-3">
         <Link
-          href="/dashboard/expenses"
+          href={returnTo}
           className="text-sm font-medium text-[var(--color-primary)]"
         >
-          ← Volver a mis gastos
+          {returnTo.startsWith("/dashboard/supervisor")
+            ? "← Volver a la rendición"
+            : "← Volver a mis gastos"}
         </Link>
       </div>
     </div>
   );
 }
+
+async function updateExpenseStatusAction(
+  expenseId: string,
+  status: "pending" | "approved" | "rejected" | "reviewing",
+  comment: string,
+): Promise<{ ok: boolean; error?: string }> {
+  "use server";
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { ok: false, error: "No hay sesión activa." };
+  }
+
+  const { data: expense, error: expenseError } = await supabase
+    .from("expenses")
+    .select("id, user_id, amount, description")
+    .eq("id", expenseId)
+    .maybeSingle();
+
+  if (expenseError || !expense) {
+    return { ok: false, error: "Gasto no encontrado." };
+  }
+
+  const updates: TablesUpdate<"expenses"> = {
+    status,
+    supervisor_comment: comment || null,
+    reviewed_by: session.user.id,
+    reviewed_at: new Date().toISOString(),
+    rejection_reason: status === "rejected" ? (comment || null) : null,
+  };
+
+  const { error: updateError } = await supabase
+    .from("expenses")
+    .update(updates)
+    .eq("id", expenseId);
+
+  if (updateError) {
+    return { ok: false, error: updateError.message };
+  }
+
+  // Si el supervisor solicita revisión, notificar al empleado vía webhook de N8N
+  if (status === "reviewing") {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL_REVISAR_GASTO;
+    if (webhookUrl) {
+      const [{ data: employee }, { data: supervisor }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", expense.user_id)
+          .single(),
+        supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", session.user.id)
+          .single(),
+      ]);
+
+      if (employee?.email && supervisor?.full_name) {
+        try {
+          await fetch(webhookUrl as string, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              expenseId,
+              employeeEmail: employee.email,
+              supervisorName: supervisor.full_name,
+              comment,
+            }),
+          });
+        } catch (error) {
+          console.error("Error enviando webhook de revisión de gasto a N8N:", error);
+        }
+      }
+    }
+  }
+
+  // Si el supervisor aprueba, notificar al empleado y supervisor vía webhook de N8N
+  if (status === "approved") {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL_APROBAR_GASTO;
+    if (webhookUrl) {
+      const [
+        { data: employee },
+        { data: supervisor },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", expense.user_id)
+          .single(),
+        supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", session.user.id)
+          .single(),
+      ]);
+
+      const employeeEmail = employee?.email ?? null;
+      const supervisorEmail = supervisor?.email ?? null;
+
+      if (employee?.full_name && supervisor?.full_name && employeeEmail && supervisorEmail) {
+        const targetEmails = `${employeeEmail},${supervisorEmail}`;
+        const payload = {
+          expenseId,
+          employeeName: employee.full_name,
+          supervisorName: supervisor.full_name,
+          amount: Number(expense.amount ?? 0),
+          description: expense.description ?? "",
+          targetEmails,
+        };
+
+        console.log("Payload hacia n8n (aprobación):", payload);
+
+        try {
+          const response = await fetch(webhookUrl as string, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          console.log("Status de n8n (aprobación):", response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error devuelto por n8n (aprobación):", errorText);
+          }
+        } catch (error) {
+          console.error("Error enviando webhook de aprobación de gasto a N8N:", error);
+        }
+      }
+    }
+  }
+
+  return { ok: true };
+}
+
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
