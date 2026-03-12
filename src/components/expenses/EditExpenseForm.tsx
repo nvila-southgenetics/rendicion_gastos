@@ -43,8 +43,11 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
   const [fecha, setFecha]             = useState(expense.expense_date ?? "");
   const [newTickets, setNewTickets]   = useState<UploadedFile[]>([]);
   const [saving, setSaving]           = useState(false);
+  const [deleting, setDeleting]       = useState(false);
+  const [employeeResponse, setEmployeeResponse] = useState(expense.employee_response ?? "");
 
   const isLocked = expense.status === "approved" || expense.status === "rejected";
+  const isReviewing = expense.status === "reviewing";
 
   function validate(): boolean {
     if (!descripcion || descripcion.trim().length < 3) {
@@ -92,6 +95,12 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
       updates.ticket_urls         = allUrls;
       updates.n8n_processed       = false;
     }
+    // Si el gasto estaba en revisión, vuelve a estado pending y guardamos la respuesta del empleado
+    if (isReviewing) {
+      updates.status = "pending" as Expense["status"];
+      updates.employee_response = employeeResponse.trim() || null;
+      updates.n8n_processed = false;
+    }
 
     const { error } = await supabase
       .from("expenses")
@@ -107,8 +116,45 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
       return;
     }
 
+    // Si estaba en revisión, notificar que se corrigió y se reenvía
+    if (isReviewing) {
+      try {
+        await fetch("/api/gasto-corregido", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            expenseId: expense.id,
+            employeeResponse: employeeResponse.trim(),
+          }),
+        });
+      } catch (err) {
+        console.error("Error llamando webhook de gasto corregido:", err);
+      }
+    }
+
     toast.success("Gasto actualizado correctamente.");
     router.push(`/dashboard/expenses/${expense.id}`);
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("¿Seguro que querés eliminar este gasto? Esta acción no se puede deshacer.")) {
+      return;
+    }
+    setDeleting(true);
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", expense.id);
+    setDeleting(false);
+    if (error) {
+      const msg = error.message ?? error.code ?? JSON.stringify(error);
+      console.error("expenses DELETE error:", msg, error);
+      toast.error(`No se pudo eliminar: ${msg}`);
+      return;
+    }
+    toast.success("Gasto eliminado.");
+    router.push("/dashboard/expenses");
     router.refresh();
   }
 
@@ -117,6 +163,18 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
       {isLocked && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           Este gasto está <strong>{expense.status === "approved" ? "aprobado" : "rechazado"}</strong> y no puede editarse.
+        </div>
+      )}
+
+      {isReviewing && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 space-y-1">
+          <p className="font-semibold">Este gasto está en revisión</p>
+          {expense.supervisor_comment && (
+            <p>
+              Comentario del supervisor:{" "}
+              <span className="font-medium">{expense.supervisor_comment}</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -224,25 +282,62 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
         </div>
       </div>
 
+      {isReviewing && !isLocked && (
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-[var(--color-text-primary)]">
+            Tu respuesta / explicación (opcional)
+          </label>
+          <textarea
+            className="input min-h-[80px] text-sm"
+            value={employeeResponse}
+            onChange={(e) => setEmployeeResponse(e.target.value)}
+            maxLength={500}
+            placeholder="Explicá qué cambiaste o por qué considerás válido este gasto…"
+            disabled={isLocked}
+          />
+          <p className="text-[0.7rem] text-right text-[var(--color-text-muted)]">
+            {employeeResponse.length}/500
+          </p>
+        </div>
+      )}
+
       {/* Acciones */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           className="text-sm font-medium text-[var(--color-primary)]"
           onClick={() => router.back()}
-          disabled={saving}
+          disabled={saving || deleting}
         >
           Cancelar
         </button>
-        {!isLocked && (
-          <button
-            type="submit"
-            className="btn-primary w-full sm:w-auto"
-            disabled={saving}
-          >
-            {saving ? "Guardando..." : "Guardar cambios"}
-          </button>
-        )}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          {!isLocked && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving || deleting}
+              className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+            >
+              Eliminar gasto
+            </button>
+          )}
+          {!isLocked && (
+            <button
+              type="submit"
+              className="btn-primary w-full sm:w-auto"
+              disabled={saving}
+            >
+              {isReviewing
+                ? saving
+                  ? "Reenviando..."
+                  : "Guardar y reenviar"
+                : saving
+                  ? "Guardando..."
+                  : "Guardar cambios"}
+            </button>
+          )}
+        </div>
       </div>
     </form>
   );
