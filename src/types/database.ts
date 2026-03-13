@@ -367,6 +367,8 @@ export type Database = {
           user_id: string
           week_end: string
           week_start: string
+          workflow_status: string | null
+          payment_receipt_url: string | null
         }
         Insert: {
           budget_max?: number | null
@@ -383,6 +385,8 @@ export type Database = {
           user_id: string
           week_end: string
           week_start: string
+          workflow_status?: string | null
+          payment_receipt_url?: string | null
         }
         Update: {
           budget_max?: number | null
@@ -399,6 +403,8 @@ export type Database = {
           user_id?: string
           week_end?: string
           week_start?: string
+          workflow_status?: string | null
+          payment_receipt_url?: string | null
         }
         Relationships: [
           {

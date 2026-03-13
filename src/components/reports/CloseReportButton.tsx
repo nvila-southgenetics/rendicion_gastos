@@ -126,38 +126,5 @@ export function CloseReportButton({ reportId, currentStatus }: ReportStatusButto
     router.refresh();
   }
 
-  if (confirming) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-[var(--color-text-muted)]">
-          {isOpen ? "¿Confirmar cierre?" : "¿Reabrir la rendición?"}
-        </span>
-        <button
-          onClick={handleToggle}
-          disabled={loading}
-          className={`rounded-full px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 ${
-            isOpen ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
-          }`}
-        >
-          {loading ? "Guardando..." : "Confirmar"}
-        </button>
-        <button
-          onClick={() => setConfirming(false)}
-          disabled={loading}
-          className="rounded-full border border-[#e5e2ea] px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-        >
-          Cancelar
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-    >
-      {isOpen ? "Cerrar rendición" : "Reabrir rendición"}
-    </button>
-  );
+  return null;
 }

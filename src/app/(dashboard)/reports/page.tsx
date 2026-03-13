@@ -4,18 +4,55 @@ import type { Tables } from "@/types/database";
 
 type WeeklyReport = Tables<"weekly_reports">;
 
-function ReportStatusBadge({ status }: { status: string }) {
+function ReportStatusBadge({
+  workflowStatus,
+  status,
+}: {
+  workflowStatus: string | null;
+  status: string;
+}) {
+  const ws = (workflowStatus ?? "draft") as
+    | "draft"
+    | "submitted"
+    | "needs_correction"
+    | "approved"
+    | "paid";
+
+  const label =
+    ws === "submitted"
+      ? "En revisión"
+      : ws === "approved"
+        ? "Cerrada / Aprobada"
+        : ws === "paid"
+          ? "Pagada"
+          : ws === "needs_correction"
+            ? "Devuelta al empleado"
+            : "Borrador";
+
+  const badgeClasses =
+    ws === "submitted"
+      ? "bg-amber-100 text-amber-700"
+      : ws === "approved"
+        ? "bg-emerald-100 text-emerald-700"
+        : ws === "paid"
+          ? "bg-blue-100 text-blue-700"
+          : ws === "needs_correction"
+            ? "bg-rose-100 text-rose-700"
+            : "bg-gray-100 text-gray-700";
+
   const closed = status === "closed";
+
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-        closed
-          ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-          : "bg-emerald-100 text-emerald-700"
-      }`}
-    >
-      {closed ? "Cerrada" : "Abierta"}
-    </span>
+    <div className="flex flex-col items-end gap-0.5">
+      <span
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${badgeClasses}`}
+      >
+        {label}
+      </span>
+      <span className="text-[0.6rem] text-[var(--color-text-muted)]">
+        {closed ? "Estado interno: cerrada" : "Estado interno: abierta"}
+      </span>
+    </div>
   );
 }
 
@@ -91,7 +128,10 @@ export default async function ReportsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <ReportStatusBadge status={report.status} />
+                  <ReportStatusBadge
+                    workflowStatus={report.workflow_status}
+                    status={report.status}
+                  />
                   <span className="text-[var(--color-text-muted)]">›</span>
                 </div>
               </Link>

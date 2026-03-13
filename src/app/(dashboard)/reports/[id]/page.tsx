@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import { CloseReportButton } from "@/components/reports/CloseReportButton";
 import { RealtimeBudgetSection } from "@/components/reports/RealtimeBudgetSection";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
 import type { Tables } from "@/types/database";
+import { submitReportAction } from "./submitReportAction";
+import { returnReportAction } from "./returnReportAction";
+import { approveReportAction } from "./approveReportAction";
 
 type WeeklyReport = Tables<"weekly_reports">;
 type Expense      = Tables<"expenses">;
@@ -19,6 +21,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   office_supplies: "Insumos de oficina",
   entertainment:   "Entretenimiento",
   other:           "Otros",
+};
+
+const WORKFLOW_LABELS: Record<string, string> = {
+  draft:            "Borrador",
+  submitted:        "Enviada a revisión",
+  needs_correction: "Con correcciones pendientes",
+  approved:         "Aprobada",
+  paid:             "Pagada",
 };
 
 interface ReportDetailPageProps {
@@ -41,11 +51,32 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
 
   const r = report as WeeklyReport;
   const isOpen = r.status === "open";
+  const isOwner = session.user.id === r.user_id;
+  const isSupervisor = !isOwner;
   const startDate = new Date(r.week_start + "T12:00:00");
   const endDate   = new Date(r.week_end   + "T12:00:00");
 
   const expenseList = (expenses ?? []) as Expense[];
   const nonRejectedExpenses = expenseList.filter((e) => e.status !== "rejected");
+
+  const workflowStatus = (r.workflow_status ?? "draft") as
+    | "draft"
+    | "submitted"
+    | "needs_correction"
+    | "approved"
+    | "paid";
+
+  const canEmployeeEditReport =
+    workflowStatus === "draft" || workflowStatus === "needs_correction";
+  const isSubmittedOrBeyond =
+    workflowStatus === "submitted" ||
+    workflowStatus === "approved" ||
+    workflowStatus === "paid";
+
+  const allExpensesApproved =
+    expenseList.length > 0 && expenseList.every((e) => e.status === "approved");
+
+  const canSupervisorAct = isSupervisor && workflowStatus === "submitted";
 
   // Presets globales como base, sobreescritos por las tasas propias del reporte
   const globalPresets: Record<string, number> = {};
@@ -96,17 +127,58 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
         }`}>
           {isOpen ? "Abierta" : "Cerrada"}
         </span>
-        <CloseReportButton reportId={r.id} currentStatus={r.status} />
+        <span className="inline-flex items-center rounded-full bg-[#f5f1f8] px-2.5 py-0.5 text-[0.7rem] font-semibold text-[var(--color-text-muted)]">
+          {WORKFLOW_LABELS[workflowStatus] ?? workflowStatus}
+        </span>
         <a
           href={`/api/reports/export?report_id=${r.id}`}
           className="rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
           Exportar Excel
         </a>
-        {isOpen && (
+        {canSupervisorAct && (
+          <div className="flex gap-2 ml-auto">
+            <form action={returnReportAction}>
+              <input type="hidden" name="reportId" value={r.id} />
+              <button
+                type="submit"
+                className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-200"
+              >
+                Devolver para corrección
+              </button>
+            </form>
+            <form action={approveReportAction}>
+              <input type="hidden" name="reportId" value={r.id} />
+              <button
+                type="submit"
+                disabled={!allExpensesApproved}
+                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                title={
+                  !allExpensesApproved
+                    ? "Debes aprobar todos los gastos individuales primero"
+                    : "Aprobar Rendición Completa"
+                }
+              >
+                {allExpensesApproved ? "Aprobar Rendición" : "Aprobar gastos pendientes..."}
+              </button>
+            </form>
+          </div>
+        )}
+        {isOwner && isOpen && canEmployeeEditReport && (
           <Link href={`/dashboard/expenses/new?reportId=${r.id}`} className="btn-primary text-sm ml-auto">
             + Agregar gasto
           </Link>
+        )}
+        {isOwner && canEmployeeEditReport && (
+          <form action={submitReportAction} className="ml-auto">
+            <input type="hidden" name="reportId" value={r.id} />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white hover:bg-[var(--color-primary-dark)]"
+            >
+              Cerrar y enviar rendición
+            </button>
+          </form>
         )}
       </div>
 
@@ -127,7 +199,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-[#f0ecf4] px-4 py-3">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Gastos</h2>
-          {isOpen && (
+        {isOwner && isOpen && canEmployeeEditReport && (
             <Link href={`/dashboard/expenses/new?reportId=${r.id}`} className="text-xs font-medium text-[var(--color-primary)]">
               + Agregar
             </Link>
@@ -235,7 +307,9 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                         <ExpenseStatusBadge status={expense.status ?? "pending"} />
                       </td>
                       <td className="px-4 py-3 align-middle text-right">
-                        {expense.status === "reviewing" ? (
+                        {canEmployeeEditReport &&
+                        (expense.status === "reviewing" ||
+                          expense.status === "rejected") ? (
                           <Link
                             href={`/dashboard/expenses/${expense.id}/edit`}
                             className="text-xs font-semibold text-amber-600 hover:underline"
@@ -283,7 +357,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <div className="text-3xl">🧾</div>
             <p className="text-sm text-[var(--color-text-muted)]">Sin gastos aún.</p>
-            {isOpen && (
+            {isOwner && isOpen && canEmployeeEditReport && (
               <Link href={`/dashboard/expenses/new?reportId=${r.id}`} className="btn-primary text-sm">
                 Agregar primer gasto
               </Link>

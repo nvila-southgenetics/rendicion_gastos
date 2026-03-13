@@ -271,9 +271,9 @@ async function updateExpenseStatusAction(
     }
   }
 
-  // Si el supervisor aprueba, notificar al empleado y supervisor vía webhook de N8N
-  if (status === "approved") {
-    const webhookUrl = process.env.N8N_WEBHOOK_URL_APROBAR_GASTO;
+  // Si el supervisor rechaza, notificar al empleado y supervisor vía webhook de N8N
+  if (status === "rejected") {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL_RECHAZAR_GASTO;
     if (webhookUrl) {
       const [
         { data: employee },
@@ -294,8 +294,106 @@ async function updateExpenseStatusAction(
       const employeeEmail = employee?.email ?? null;
       const supervisorEmail = supervisor?.email ?? null;
 
-      if (employee?.full_name && supervisor?.full_name && employeeEmail && supervisorEmail) {
-        const targetEmails = `${employeeEmail},${supervisorEmail}`;
+      const rawEmails = [employeeEmail, supervisorEmail];
+      const targetEmails = Array.from(
+        new Set(
+          rawEmails.filter(
+            (e): e is string => typeof e === "string" && e.trim().length > 0,
+          ),
+        ),
+      ).join(",");
+
+      if (
+        employee?.full_name &&
+        supervisor?.full_name &&
+        targetEmails &&
+        comment
+      ) {
+        const payload = {
+          expenseId,
+          employeeName: employee.full_name,
+          supervisorName: supervisor.full_name,
+          amount: Number(expense.amount ?? 0),
+          description: expense.description ?? "",
+          comment,
+          targetEmails,
+        };
+
+        console.log("Payload hacia n8n (gasto rechazado):", payload);
+
+        try {
+          const response = await fetch(webhookUrl as string, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          console.log("Status de n8n (gasto rechazado):", response.status);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error devuelto por n8n (gasto rechazado):", errorText);
+          }
+        } catch (error) {
+          console.error("Error enviando webhook de rechazo de gasto a N8N:", error);
+        }
+      }
+    }
+  }
+
+  // Si el supervisor aprueba, notificar al empleado, supervisor, admin fijo y chusmas del mismo país vía webhook de N8N
+  if (status === "approved") {
+    const webhookUrl = process.env.N8N_WEBHOOK_URL_APROBAR_GASTO;
+    if (webhookUrl) {
+      const [
+        { data: employee },
+        { data: supervisor },
+        { data: chusmas },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name, email, country")
+          .eq("id", expense.user_id)
+          .single(),
+        supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", session.user.id)
+          .single(),
+        supabase
+          .from("profiles")
+          .select("email, role, country"),
+      ]);
+
+      const employeeEmail = employee?.email ?? null;
+      const supervisorEmail = supervisor?.email ?? null;
+      const employeeCountry = employee?.country ?? null;
+
+      const chusmasEmails =
+        (chusmas ?? [])
+          .filter(
+            (p: { email: string | null; role: string | null; country: string | null }) =>
+              p.role === "chusmas" && p.country === employeeCountry && p.email,
+          )
+          .map((p: { email: string | null }) => p.email as string) ?? [];
+
+      const allEmails = [
+        employeeEmail,
+        supervisorEmail,
+        "vvasconcellos@southgenetics.com",
+        ...chusmasEmails,
+      ];
+
+      const cleanEmails = Array.from(
+        new Set(
+          allEmails.filter(
+            (e): e is string => typeof e === "string" && e.trim().length > 0,
+          ),
+        ),
+      );
+
+      const targetEmails = cleanEmails.join(",");
+
+      if (employee?.full_name && supervisor?.full_name && targetEmails) {
         const payload = {
           expenseId,
           employeeName: employee.full_name,

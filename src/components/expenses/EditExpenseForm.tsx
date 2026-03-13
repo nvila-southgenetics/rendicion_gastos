@@ -47,8 +47,10 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
   const [deleting, setDeleting]       = useState(false);
   const [employeeResponse, setEmployeeResponse] = useState(expense.employee_response ?? "");
 
-  const isLocked = expense.status === "approved" || expense.status === "rejected";
+  const isLocked = expense.status === "approved";
   const isReviewing = expense.status === "reviewing";
+  const isRejected = expense.status === "rejected";
+  const canResubmit = isReviewing || isRejected;
 
   function validate(): boolean {
     if (!descripcion || descripcion.trim().length < 3) {
@@ -119,8 +121,8 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
       updates.ticket_urls         = allUrls;
       updates.n8n_processed       = false;
     }
-    // Si el gasto estaba en revisión, vuelve a estado pending y guardamos la respuesta del empleado
-    if (isReviewing) {
+    // Si el gasto estaba en revisión o rechazado, vuelve a estado pending y guardamos la respuesta del empleado
+    if (canResubmit) {
       updates.status = "pending" as Expense["status"];
       updates.employee_response = employeeResponse.trim() || null;
       updates.n8n_processed = false;
@@ -140,8 +142,8 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
       return;
     }
 
-    // Si estaba en revisión, notificar que se corrigió y se reenvía
-    if (isReviewing) {
+    // Si estaba en revisión o rechazado, notificar que se corrigió y se reenvía
+    if (canResubmit) {
       try {
         await fetch("/api/gasto-corregido", {
           method: "POST",
@@ -186,13 +188,17 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {isLocked && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          Este gasto está <strong>{expense.status === "approved" ? "aprobado" : "rechazado"}</strong> y no puede editarse.
+          Este gasto está <strong>aprobado</strong> y no puede editarse.
         </div>
       )}
 
-      {isReviewing && (
+      {(isReviewing || isRejected) && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 space-y-1">
-          <p className="font-semibold">Este gasto está en revisión</p>
+          <p className="font-semibold">
+            {isReviewing
+              ? "Este gasto está en revisión"
+              : "Este gasto fue rechazado por tu supervisor"}
+          </p>
           {expense.supervisor_comment && (
             <p>
               Comentario del supervisor:{" "}
@@ -322,7 +328,7 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
         />
       </div>
 
-      {isReviewing && !isLocked && (
+      {canResubmit && !isLocked && (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-[var(--color-text-primary)]">
             Tu respuesta / explicación (opcional)
@@ -368,7 +374,7 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
               className="btn-primary w-full sm:w-auto"
               disabled={saving}
             >
-              {isReviewing
+              {canResubmit
                 ? saving
                   ? "Reenviando..."
                   : "Guardar y reenviar"

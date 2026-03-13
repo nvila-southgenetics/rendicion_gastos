@@ -34,8 +34,10 @@ export function MobileNav({ isAdmin = false, isSupervisor = false, isViewer = fa
     <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-[#e5e2ea] bg-white/95 px-2 py-2.5 md:hidden">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const active =
-          pathname === item.href || pathname.startsWith(item.href + "/");
+        const isRootDashboard = item.href === "/dashboard";
+        const active = isRootDashboard
+          ? pathname === "/dashboard"
+          : pathname === item.href || pathname.startsWith(item.href + "/");
         return (
           <Link
             key={item.href}

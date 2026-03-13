@@ -40,8 +40,10 @@ export function Sidebar({ isAdmin = false, isSupervisor = false, isViewer = fals
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const isRootDashboard = item.href === "/dashboard";
+          const active = isRootDashboard
+            ? pathname === "/dashboard"
+            : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}

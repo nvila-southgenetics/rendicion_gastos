@@ -53,7 +53,7 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
   // Todas las rendiciones del empleado
   const { data: reports } = await supabase
     .from("weekly_reports")
-    .select("id, title, week_start, week_end, status, budget_max, expenses(id, status)")
+    .select("id, title, week_start, week_end, status, workflow_status, budget_max, expenses(id, status)")
     .eq("user_id", employeeId)
     .order("created_at", { ascending: false });
 
@@ -64,6 +64,7 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
       week_start: string;
       week_end: string;
       status: "open" | "closed";
+      workflow_status: string | null;
       budget_max: number | null;
       expenses: Array<{ id: string; status: string | null }> | null;
     }>;
@@ -126,6 +127,35 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
                 (e) => e.status === "pending",
               ).length;
 
+              const ws = (r.workflow_status ?? "draft") as
+                | "draft"
+                | "submitted"
+                | "needs_correction"
+                | "approved"
+                | "paid";
+
+              const label =
+                ws === "submitted"
+                  ? "En revisión"
+                  : ws === "approved"
+                    ? "Cerrada / Aprobada"
+                    : ws === "paid"
+                      ? "Pagada"
+                      : ws === "needs_correction"
+                        ? "Devuelta al empleado"
+                        : "Borrador";
+
+              const badgeClasses =
+                ws === "submitted"
+                  ? "bg-amber-100 text-amber-700"
+                  : ws === "approved"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : ws === "paid"
+                      ? "bg-blue-100 text-blue-700"
+                      : ws === "needs_correction"
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-gray-100 text-gray-700";
+
               return (
                 <Link
                   key={r.id}
@@ -143,13 +173,9 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${
-                      r.status === "open"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-                    }`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${badgeClasses}`}
                   >
-                    {r.status === "open" ? "Abierta" : "Cerrada"}
+                    {label}
                   </span>
                 </Link>
               );

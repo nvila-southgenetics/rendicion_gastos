@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import { CloseReportButton } from "@/components/reports/CloseReportButton";
-import { NotifyReviewButton } from "@/components/reports/NotifyReviewButton";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { approveReportAction } from "@/app/(dashboard)/reports/[id]/approveReportAction";
+import { returnReportAction } from "@/app/(dashboard)/reports/[id]/returnReportAction";
 
 const CATEGORY_LABELS: Record<string, string> = {
   transport:       "Transporte",
@@ -61,6 +61,20 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
   const owner = report.profiles as { full_name: string; email: string; department: string | null } | null;
   const expenseList = expenses ?? [];
 
+  const workflowStatus = (report.workflow_status ?? "draft") as
+    | "draft"
+    | "submitted"
+    | "needs_correction"
+    | "approved"
+    | "paid";
+
+  const allExpensesApproved =
+    expenseList.length > 0 && expenseList.every((e) => e.status === "approved");
+
+  const hasProblemExpenses = expenseList.some(
+    (e) => e.status === "rejected" || e.status === "reviewing",
+  );
+
   const globalPresets: Record<string, number> = {};
   for (const p of presets ?? []) globalPresets[p.currency] = Number(p.rate);
   const reportRates    = (report.exchange_rates ?? {}) as Record<string, number>;
@@ -111,12 +125,24 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-            report.status === "open"
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+            workflowStatus === "submitted"
+              ? "bg-amber-100 text-amber-700"
+              : workflowStatus === "approved"
+                ? "bg-emerald-100 text-emerald-700"
+                : workflowStatus === "paid"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700"
           }`}
         >
-          {report.status === "open" ? "Abierta" : "Cerrada"}
+          {workflowStatus === "submitted"
+            ? "En revisión"
+            : workflowStatus === "approved"
+              ? "Cerrada / Aprobada"
+              : workflowStatus === "paid"
+                ? "Pagada"
+                : workflowStatus === "needs_correction"
+                  ? "Devuelta al empleado"
+                  : "Borrador"}
         </span>
         {budgetMax && (
           <span
@@ -128,22 +154,38 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
             {budgetOverrun && " ⚠ Excedido"}
           </span>
         )}
-        <div className="ml-auto flex items-center gap-2">
-          {report.status === "open" && (
-            <CloseReportButton
-              reportId={report.id}
-              currentStatus={report.status as "open" | "closed"}
-            />
-          )}
-          {report.status === "closed" && owner && (
-            <NotifyReviewButton
-              reportId={report.id}
-              employeeId={report.user_id}
-              employeeName={owner.full_name}
-              employeeEmail={owner.email}
-            />
-          )}
-        </div>
+        {workflowStatus === "submitted" && (
+          <div className="ml-auto flex items-center gap-2">
+            {hasProblemExpenses && (
+              <form action={returnReportAction}>
+                <input type="hidden" name="reportId" value={report.id} />
+                <button
+                  type="submit"
+                  className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-200 transition-colors"
+                >
+                  Devolver para corrección
+                </button>
+              </form>
+            )}
+            <form action={approveReportAction}>
+              <input type="hidden" name="reportId" value={report.id} />
+              <button
+                type="submit"
+                disabled={!allExpensesApproved}
+                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                title={
+                  !allExpensesApproved
+                    ? "Debes aprobar todos los gastos individuales primero"
+                    : "Aprobar Rendición Completa"
+                }
+              >
+                {allExpensesApproved
+                  ? "Aprobar rendición"
+                  : "Aprobar gastos pendientes..."}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
