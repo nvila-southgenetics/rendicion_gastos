@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { PayReportModal } from "@/components/reports/PayReportModal";
 
 const CATEGORY_LABELS: Record<string, string> = {
   transport: "Transporte",
@@ -32,7 +33,9 @@ export default async function ViewerReportDetailPage({ params }: Props) {
     .select("role")
     .eq("id", session.user.id)
     .single();
-  if (me?.role !== "chusmas" && me?.role !== "admin") redirect("/dashboard");
+  const isPagador = me?.role === "pagador";
+  if (me?.role !== "chusmas" && me?.role !== "admin" && !isPagador)
+    redirect("/dashboard");
 
   const [{ data: report }, { data: expenses }, { data: presets }] = await Promise.all([
     supabase
@@ -79,15 +82,23 @@ export default async function ViewerReportDetailPage({ params }: Props) {
   const startDate = new Date(report.week_start + "T12:00:00");
   const endDate = new Date(report.week_end + "T12:00:00");
 
+  const workflowStatus = (report.workflow_status ?? "draft") as
+    | "draft"
+    | "submitted"
+    | "needs_correction"
+    | "approved"
+    | "paid";
+
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Link
           href="/dashboard/viewer"
-          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
-          ← Ver rendiciones
+          <span>←</span>
+          <span>Volver a ver rendiciones</span>
         </Link>
         <h1 className="page-title mt-1">
           {report.title ?? (
@@ -141,7 +152,61 @@ export default async function ViewerReportDetailPage({ params }: Props) {
             {budgetOverrun && " ⚠ Excedido"}
           </span>
         )}
+        <div className="ml-auto flex items-center gap-2">
+          {isPagador && workflowStatus === "approved" && (
+            <PayReportModal reportId={report.id} suggestedAmount={totalUSD} />
+          )}
+        </div>
       </div>
+
+      {/* Información de pago */}
+      {workflowStatus === "paid" && (
+        <div className="card p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            Información de pago
+          </h2>
+          <div className="grid gap-2 text-xs text-[var(--color-text-primary)] sm:grid-cols-3">
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Pagado el
+              </p>
+              <p className="mt-0.5">
+                {report.payment_date
+                  ? new Date(report.payment_date + "T12:00:00").toLocaleDateString("es-UY")
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Monto pagado
+              </p>
+              <p className="mt-0.5">
+                {typeof report.amount_paid === "number"
+                  ? `USD ${fmt(Number(report.amount_paid))}`
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Destino
+              </p>
+              <p className="mt-0.5">{report.payment_destination || "—"}</p>
+            </div>
+          </div>
+          {report.payment_receipt_url && (
+            <div className="pt-1">
+              <a
+                href={report.payment_receipt_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+              >
+                Ver comprobante ↗
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -160,12 +225,17 @@ export default async function ViewerReportDetailPage({ params }: Props) {
         ))}
       </div>
 
-      {/* Lista de gastos (solo lectura) */}
+      {/* Lista de gastos (solo lectura, con acceso al detalle) */}
       <div className="card overflow-hidden">
         <div className="border-b border-[#f0ecf4] px-4 py-3">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Gastos ({expenseList.length})
           </h2>
+          {expenseList.length > 0 && (
+            <p className="text-[0.7rem] text-[var(--color-text-muted)]">
+              Hacé clic en cualquier gasto para ver el detalle completo en modo solo lectura.
+            </p>
+          )}
         </div>
 
         {expenseList.length > 0 ? (
@@ -178,48 +248,54 @@ export default async function ViewerReportDetailPage({ params }: Props) {
               );
               const isUSD = (expense.currency ?? "UYU") === "USD";
               return (
-                <div key={expense.id} className="p-4 hover:bg-[#fdfbff] transition-colors">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {expense.description}
-                        </span>
-                        <ExpenseStatusBadge status={expense.status ?? "pending"} />
-                      </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
-                        {expense.expense_date && (
-                          <span>
-                            {new Date(
-                              expense.expense_date + "T12:00:00",
-                            ).toLocaleDateString("es-UY")}
+                <Link
+                  key={expense.id}
+                  href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/viewer/reports/${report.id}`}
+                  className="block hover:bg-[#fdfbff] transition-colors"
+                >
+                  <div className="p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {expense.description}
                           </span>
-                        )}
-                        <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
-                      </div>
-                      <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
-                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                          {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
-                        </span>
-                        {!isUSD && usdAmount !== null && (
-                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
-                            ≈ USD {fmt(usdAmount)}
+                          <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
+                          {expense.expense_date && (
+                            <span>
+                              {new Date(
+                                expense.expense_date + "T12:00:00",
+                              ).toLocaleDateString("es-UY")}
+                            </span>
+                          )}
+                          <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
+                        </div>
+                        <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+                          <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                            {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
                           </span>
+                          {!isUSD && usdAmount !== null && (
+                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
+                              ≈ USD {fmt(usdAmount)}
+                            </span>
+                          )}
+                        </div>
+                        {expense.rejection_reason && (
+                          <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                            Motivo de rechazo: {expense.rejection_reason}
+                          </p>
+                        )}
+                        {expense.admin_notes && expense.status === "reviewing" && (
+                          <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                            Nota: {expense.admin_notes}
+                          </p>
                         )}
                       </div>
-                      {expense.rejection_reason && (
-                        <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
-                          Motivo de rechazo: {expense.rejection_reason}
-                        </p>
-                      )}
-                      {expense.admin_notes && expense.status === "reviewing" && (
-                        <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
-                          Nota: {expense.admin_notes}
-                        </p>
-                      )}
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

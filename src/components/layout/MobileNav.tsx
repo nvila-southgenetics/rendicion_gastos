@@ -1,7 +1,7 @@
 'use client';
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Receipt, FileSpreadsheet, Users, Eye, LogOut } from "lucide-react";
+import { LayoutDashboard, Receipt, FileSpreadsheet, Users, Eye, LogOut, CreditCard } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const baseNavItems = [
@@ -10,10 +10,21 @@ const baseNavItems = [
   { href: "/dashboard/expenses",   label: "Histórico",   icon: Receipt,         adminOnly: false, supervisorOnly: false, viewerOnly: false },
   { href: "/dashboard/aprobador",  label: "Aprobaciones",icon: Eye,             adminOnly: false, supervisorOnly: true,  viewerOnly: false },
   { href: "/dashboard/viewer",     label: "Ver rend.",   icon: Eye,             adminOnly: false, supervisorOnly: false, viewerOnly: true  },
+  { href: "/dashboard/viewer",     label: "Pagos",       icon: CreditCard,      adminOnly: false, supervisorOnly: false, viewerOnly: false, pagadorOnly: true },
   { href: "/dashboard/admin",      label: "Admin",       icon: Users,           adminOnly: true,  supervisorOnly: false, viewerOnly: false },
 ];
 
-export function MobileNav({ isAdmin = false, isSupervisor = false, isViewer = false }: { isAdmin?: boolean; isSupervisor?: boolean; isViewer?: boolean }) {
+export function MobileNav({
+  isAdmin = false,
+  isSupervisor = false,
+  isViewer = false,
+  isPagador = false,
+}: {
+  isAdmin?: boolean;
+  isSupervisor?: boolean;
+  isViewer?: boolean;
+  isPagador?: boolean;
+}) {
   const pathname = usePathname();
   const router   = useRouter();
   const supabase = createSupabaseBrowserClient();
@@ -22,6 +33,7 @@ export function MobileNav({ isAdmin = false, isSupervisor = false, isViewer = fa
     if (item.adminOnly)       return isAdmin;
     if (item.supervisorOnly)  return isSupervisor;
     if (item.viewerOnly)      return isViewer;
+    if ((item as any).pagadorOnly)     return isPagador;
     return true;
   });
 

@@ -71,12 +71,13 @@ export default async function AprobadorEmployeeDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-5">
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Link
           href="/dashboard/aprobador"
-          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
-          ← Volver a aprobaciones
+          <span>←</span>
+          <span>Volver a aprobaciones</span>
         </Link>
         <h1 className="page-title mt-1">Rendiciones de {employee.full_name}</h1>
         <p className="page-subtitle">
@@ -159,7 +160,7 @@ export default async function AprobadorEmployeeDetailPage({ params }: Props) {
               return (
                 <Link
                   key={r.id}
-                  href={`/dashboard/supervisor/reports/${r.id}`}
+                  href={`/dashboard/aprobador/reports/${r.id}?returnTo=/dashboard/aprobador/employee/${employee.id}`}
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#fdfbff] transition-colors"
                 >
                   <div className="min-w-0 flex-1">

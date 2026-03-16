@@ -54,8 +54,30 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
   const isOwner = e.user_id === session.user.id;
   const canEditOwn =
     isOwner && (e.status === "pending" || e.status === "reviewing");
-  const canShowAprobadorActions =
-    !isOwner && (me?.role === "aprobador" || me?.role === "admin");
+
+  // Solo permitir acciones del aprobador si la rendición asociada fue enviada
+  let canShowAprobadorActions = false;
+  if (!isOwner && (me?.role === "aprobador" || me?.role === "admin")) {
+    const { data: reportForExpense } = await supabase
+      .from("weekly_reports")
+      .select("workflow_status")
+      .eq("id", e.report_id)
+      .maybeSingle();
+
+    const workflowStatus = (reportForExpense?.workflow_status ?? "draft") as
+      | "draft"
+      | "submitted"
+      | "needs_correction"
+      | "approved"
+      | "paid";
+
+    canShowAprobadorActions = workflowStatus === "submitted";
+  }
+
+  const normalizedReturnTo =
+    returnTo.startsWith("/dashboard/supervisor")
+      ? returnTo.replace("/dashboard/supervisor", "/dashboard/aprobador")
+      : returnTo;
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -180,12 +202,15 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
 
       <div className="flex gap-3">
         <Link
-          href={returnTo}
-          className="text-sm font-medium text-[var(--color-primary)]"
+          href={normalizedReturnTo}
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.8rem] font-semibold text-[var(--color-primary)] hover:bg-[#f5f1f8]"
         >
-          {returnTo.startsWith("/dashboard/supervisor")
-            ? "← Volver a la rendición"
-            : "← Volver a mis gastos"}
+          <span>←</span>
+          <span>
+            {normalizedReturnTo.startsWith("/dashboard/aprobador")
+              ? "Volver a la rendición"
+              : "Volver a mis gastos"}
+          </span>
         </Link>
       </div>
     </div>
@@ -210,12 +235,34 @@ async function updateExpenseStatusAction(
 
   const { data: expense, error: expenseError } = await supabase
     .from("expenses")
-    .select("id, user_id, amount, description")
+    .select("id, user_id, amount, description, report_id")
     .eq("id", expenseId)
     .maybeSingle();
 
   if (expenseError || !expense) {
     return { ok: false, error: "Gasto no encontrado." };
+  }
+
+  // Verificar que la rendición asociada esté enviada al aprobador
+  const { data: reportForExpense } = await supabase
+    .from("weekly_reports")
+    .select("workflow_status")
+    .eq("id", expense.report_id)
+    .maybeSingle();
+
+  const workflowStatus = (reportForExpense?.workflow_status ?? "draft") as
+    | "draft"
+    | "submitted"
+    | "needs_correction"
+    | "approved"
+    | "paid";
+
+  if (workflowStatus !== "submitted") {
+    return {
+      ok: false,
+      error:
+        "Solo se pueden aprobar o revisar gastos de rendiciones que ya fueron enviadas al aprobador.",
+    };
   }
 
   const updates: TablesUpdate<"expenses"> = {

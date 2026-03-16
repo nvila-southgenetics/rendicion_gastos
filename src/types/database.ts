@@ -369,6 +369,9 @@ export type Database = {
           week_start: string
           workflow_status: string | null
           payment_receipt_url: string | null
+          payment_date: string | null
+          amount_paid: number | null
+          payment_destination: string | null
         }
         Insert: {
           budget_max?: number | null
@@ -387,6 +390,9 @@ export type Database = {
           week_start: string
           workflow_status?: string | null
           payment_receipt_url?: string | null
+          payment_date?: string | null
+          amount_paid?: number | null
+          payment_destination?: string | null
         }
         Update: {
           budget_max?: number | null
@@ -405,6 +411,9 @@ export type Database = {
           week_start?: string
           workflow_status?: string | null
           payment_receipt_url?: string | null
+          payment_date?: string | null
+          amount_paid?: number | null
+          payment_destination?: string | null
         }
         Relationships: [
           {
@@ -442,7 +451,14 @@ export type Database = {
         | "other"
       expense_status: "pending" | "approved" | "rejected" | "reviewing"
       report_status: "open" | "closed"
-      user_role: "admin" | "employee" | "seller" | "supervisor" | "chusmas"
+      user_role:
+        | "admin"
+        | "employee"
+        | "seller"
+        | "supervisor"
+        | "aprobador"
+        | "pagador"
+        | "chusmas"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -582,7 +598,15 @@ export const Constants = {
       ],
       expense_status: ["pending", "approved", "rejected", "reviewing"],
       report_status: ["open", "closed"],
-      user_role: ["admin", "employee", "supervisor", "chusmas"],
+      user_role: [
+        "admin",
+        "employee",
+        "seller",
+        "supervisor",
+        "aprobador",
+        "pagador",
+        "chusmas",
+      ],
     },
   },
 } as const

@@ -21,7 +21,9 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
     .eq("id", session.user.id)
     .single();
 
-  if (me?.role !== "chusmas" && me?.role !== "admin") {
+  const isPagador = me?.role === "pagador";
+
+  if (me?.role !== "chusmas" && me?.role !== "admin" && !isPagador) {
     redirect("/dashboard");
   }
 
@@ -41,7 +43,7 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
     .eq("user_id", employeeId)
     .order("created_at", { ascending: false });
 
-  const reportList =
+  const allReports =
     (reports ?? []) as Array<{
       id: string;
       title: string | null;
@@ -52,14 +54,27 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
       expenses: Array<{ id: string; status: string | null }> | null;
     }>;
 
+  const reportList = isPagador
+    ? allReports.filter((r) => {
+        const ws = (r.workflow_status ?? "draft") as
+          | "draft"
+          | "submitted"
+          | "needs_correction"
+          | "approved"
+          | "paid";
+        return ws === "approved" || ws === "paid";
+      })
+    : allReports;
+
   return (
     <div className="space-y-5">
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <Link
           href="/dashboard/viewer"
-          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
-          ← Volver a ver rendiciones
+          <span>←</span>
+          <span>Volver a ver rendiciones</span>
         </Link>
         <h1 className="page-title mt-1">Rendiciones de {employee.full_name}</h1>
         <p className="page-subtitle">

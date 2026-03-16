@@ -21,9 +21,11 @@ export default async function ViewerHomePage() {
     .select("id, role")
     .eq("id", session.user.id)
     .single();
-  if (me?.role !== "chusmas" && me?.role !== "admin") redirect("/dashboard");
+  if (me?.role !== "chusmas" && me?.role !== "admin" && me?.role !== "pagador")
+    redirect("/dashboard");
 
   const isChusma = me?.role === "chusmas";
+  const isPagador = me?.role === "pagador";
 
   let employeeIds: string[] = [];
   let employeesResult:
@@ -36,14 +38,14 @@ export default async function ViewerHomePage() {
       }[]
     | null = null;
 
-  if (isChusma) {
+  if (isChusma || isPagador) {
     // Chusma: puede ver todas las personas (excepto otros chusmas/admin si queremos limitar)
     const { data: employees } = await supabase
       .from("profiles")
       .select("id, full_name, email, role, department")
       .in("role", ["employee", "seller", "aprobador", "chusmas"]);
     employeesResult = (employees ?? []) as any;
-    employeeIds = employeesResult.map((e) => e.id);
+    employeeIds = (employeesResult ?? []).map((e) => e.id);
   } else {
     // Viewer normal: respeta assignments
     const { data: assignments } = await supabase
@@ -106,7 +108,7 @@ export default async function ViewerHomePage() {
   // Get reports for all viewable employees
   const { data: reports } = await supabase
     .from("weekly_reports")
-    .select("id, title, week_start, week_end, status, user_id, expenses(id, status)")
+    .select("id, title, week_start, week_end, status, workflow_status, user_id, expenses(id, status)")
     .in("user_id", employeeIds)
     .order("created_at", { ascending: false });
 
@@ -128,7 +130,18 @@ export default async function ViewerHomePage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {employeeList.map((emp) => {
-          const empReports = reportsByEmployee[emp.id] ?? [];
+          const allReports = reportsByEmployee[emp.id] ?? [];
+          const empReports = isPagador
+            ? allReports.filter(
+                (r) =>
+                  (r as any).workflow_status === "approved" ||
+                  (r as any).workflow_status === "paid",
+              )
+            : allReports;
+
+          if (isPagador && empReports.length === 0) {
+            return null;
+          }
           const openReports = empReports.filter((r) => r.status === "open").length;
           const pendingExpenses = empReports.flatMap((r) =>
             (r.expenses as Array<{ id: string; status: string | null }> ?? []).filter(

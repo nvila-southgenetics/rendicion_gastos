@@ -5,6 +5,7 @@ import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { toUSD, totalInUSD, fmt } from "@/lib/currency";
 import { approveReportAction } from "@/app/(dashboard)/reports/[id]/approveReportAction";
 import { returnReportAction } from "@/app/(dashboard)/reports/[id]/returnReportAction";
+import { PayReportModal } from "@/components/reports/PayReportModal";
 
 const CATEGORY_LABELS: Record<string, string> = {
   transport:       "Transporte",
@@ -17,17 +18,25 @@ const CATEGORY_LABELS: Record<string, string> = {
   other:           "Otros",
 };
 
-interface Props { params: Promise<{ id: string }> }
+interface Props {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
+}
 
-export default async function AprobadorReportDetailPage({ params }: Props) {
+export default async function AprobadorReportDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const query = await searchParams;
+  const returnTo =
+    query.returnTo ??
+    (typeof window === "undefined" ? undefined : undefined);
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return null;
 
   const { data: me } = await supabase
     .from("profiles").select("role").eq("id", session.user.id).single();
-  if (me?.role !== "aprobador" && me?.role !== "admin") redirect("/dashboard");
+  const isPagador = me?.role === "pagador";
+  if (me?.role !== "aprobador" && me?.role !== "admin" && !isPagador) redirect("/dashboard");
 
   // Verify aprobador can access this report
   const { data: report } = await supabase
@@ -96,9 +105,17 @@ export default async function AprobadorReportDetailPage({ params }: Props) {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <Link href="/dashboard/aprobador" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-          ← Aprobaciones
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={returnTo ?? "/dashboard/aprobador"}
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+        >
+          <span>←</span>
+          <span>
+            {returnTo?.startsWith("/dashboard/aprobador/employee/")
+              ? "Volver a la rendición del empleado"
+              : "Volver a aprobaciones"}
+          </span>
         </Link>
         <h1 className="page-title mt-1">
           {report.title ?? (
@@ -121,7 +138,7 @@ export default async function AprobadorReportDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Status + budget + acciones de supervisor */}
+      {/* Status + budget + acciones de supervisor / pagador */}
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
@@ -154,8 +171,20 @@ export default async function AprobadorReportDetailPage({ params }: Props) {
             {budgetOverrun && " ⚠ Excedido"}
           </span>
         )}
-        {workflowStatus === "submitted" && (
-          <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
+          {workflowStatus === "approved" && (
+            <a
+              href={`/api/reports/export?report_id=${report.id}`}
+              className="rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+            >
+              Exportar Excel
+            </a>
+          )}
+          {isPagador && workflowStatus === "approved" && (
+            <PayReportModal reportId={report.id} suggestedAmount={totalUSD} />
+          )}
+          {workflowStatus === "submitted" && (
+            <>
             {hasProblemExpenses && (
               <form action={returnReportAction}>
                 <input type="hidden" name="reportId" value={report.id} />
@@ -184,8 +213,9 @@ export default async function AprobadorReportDetailPage({ params }: Props) {
                   : "Aprobar gastos pendientes..."}
               </button>
             </form>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -221,6 +251,55 @@ export default async function AprobadorReportDetailPage({ params }: Props) {
           <p className="text-right text-[0.65rem] text-[var(--color-text-muted)]">
             {((totalUSD / budgetMax) * 100).toFixed(1)}% del presupuesto utilizado
           </p>
+        </div>
+      )}
+
+      {/* Información de pago */}
+      {workflowStatus === "paid" && (
+        <div className="card p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            Información de pago
+          </h2>
+          <div className="grid gap-2 text-xs text-[var(--color-text-primary)] sm:grid-cols-3">
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Pagado el
+              </p>
+              <p className="mt-0.5">
+                {report.payment_date
+                  ? new Date(report.payment_date + "T12:00:00").toLocaleDateString("es-UY")
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Monto pagado
+              </p>
+              <p className="mt-0.5">
+                {typeof report.amount_paid === "number"
+                  ? `USD ${fmt(Number(report.amount_paid))}`
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+                Destino
+              </p>
+              <p className="mt-0.5">{report.payment_destination || "—"}</p>
+            </div>
+          </div>
+          {report.payment_receipt_url && (
+            <div className="pt-1">
+              <a
+                href={report.payment_receipt_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+              >
+                Ver comprobante ↗
+              </a>
+            </div>
+          )}
         </div>
       )}
 

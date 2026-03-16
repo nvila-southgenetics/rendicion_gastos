@@ -51,7 +51,7 @@ export async function approveReportAction(formData: FormData) {
     );
   }
 
-  const { data: owner, error: ownerError } = await supabase
+  const { data: employeeData, error: ownerError } = await supabase
     .from("profiles")
     .select("full_name, email")
     .eq("id", report.user_id)
@@ -71,27 +71,43 @@ export async function approveReportAction(formData: FormData) {
   }
 
   const webhookUrl = process.env.N8N_WEBHOOK_URL_RENDICION_APROBADA;
-  if (webhookUrl && owner?.email) {
-    const adminEmail = "vvasconcellos@southgenetics.com";
-    const payload = {
-      reportId,
-      employeeId: report.user_id,
-      employeeName: owner.full_name ?? "",
-      employeeEmail: owner.email,
-      adminEmail,
-    };
+  if (webhookUrl) {
+    // Obtener todos los usuarios con rol "pagador"
+    const { data: payers, error: payersError } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("role", "pagador");
 
-    console.log("Payload hacia n8n (rendición aprobada):", payload);
+    if (payersError) {
+      console.error(
+        "No se pudieron obtener los usuarios con rol pagador para la notificación de rendición aprobada:",
+        payersError,
+      );
+    } else {
+      const payerEmailArray =
+        (payers ?? [])
+          .map((p) => p.email)
+          .filter((e): e is string => typeof e === "string" && e.trim().length > 0) ?? [];
 
-    try {
-      const response = await fetch(webhookUrl as string, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      console.log("Status de n8n (rendición aprobada):", response.status);
-    } catch (error) {
-      console.error("Error enviando webhook de rendición aprobada a N8N:", error);
+      const pagadorEmails = payerEmailArray.join(",");
+
+      const payload = {
+        reportId: reportId,
+        employeeName: employeeData?.full_name || "Empleado",
+        pagadorEmails,
+      };
+
+      console.log("Payload Aprobación:", payload);
+
+      try {
+        await fetch(webhookUrl as string, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (error) {
+        console.error("Error enviando webhook de rendición aprobada a N8N:", error);
+      }
     }
   }
 

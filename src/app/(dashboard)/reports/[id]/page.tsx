@@ -64,7 +64,8 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
 
   const r = report as WeeklyReport;
   const isOpen = r.status === "open";
-  const isOwner = session.user.id === r.user_id && !isChusma;
+  // Dueño real de la rendición (incluye empleados y chusmas que creen sus propias rendiciones)
+  const isOwner = session.user.id === r.user_id;
   const isSupervisor = session.user.id !== r.user_id && !isChusma;
   const startDate = new Date(r.week_start + "T12:00:00");
   const endDate   = new Date(r.week_end   + "T12:00:00");
@@ -113,10 +114,14 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
     <div className="space-y-4">
       {/* Encabezado */}
       <div>
-        <Link href="/dashboard/reports" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-          ← Rendiciones
+        <Link
+          href="/dashboard/reports"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.8rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+        >
+          <span>←</span>
+          <span>Volver a mis rendiciones</span>
         </Link>
-        <h1 className="page-title mt-1">
+        <h1 className="page-title mt-3">
           {r.title ?? (
             <>
               {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
@@ -228,7 +233,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                 return (
                   <div key={expense.id} className="border-b border-[#f0ecf4] last:border-b-0">
                     <Link
-                      href={`/dashboard/expenses/${expense.id}`}
+                      href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/reports/${r.id}`}
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#faf7fd] active:bg-[#f0ecf4] transition-colors"
                     >
                       <div className="min-w-0 flex-1">
@@ -288,7 +293,10 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                   return (
                     <tr key={expense.id} className="border-t border-[#f0ecf4] hover:bg-[#faf7fd] transition-colors">
                       <td className="px-4 py-3 align-top">
-                        <Link href={`/dashboard/expenses/${expense.id}`} className="text-sm font-medium hover:text-[var(--color-primary)]">
+                        <Link
+                          href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/reports/${r.id}`}
+                          className="text-sm font-medium hover:text-[var(--color-primary)]"
+                        >
                           {expense.description}
                         </Link>
                         <p className="text-[0.7rem] text-[var(--color-text-muted)]">
@@ -335,7 +343,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                           </Link>
                         ) : (
                           <Link
-                            href={`/dashboard/expenses/${expense.id}`}
+                            href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/reports/${r.id}`}
                             className="text-xs font-medium text-[var(--color-primary)] hover:underline"
                           >
                             Ver
