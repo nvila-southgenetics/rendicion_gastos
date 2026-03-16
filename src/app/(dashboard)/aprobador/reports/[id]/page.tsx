@@ -19,7 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 interface Props { params: Promise<{ id: string }> }
 
-export default async function SupervisorReportDetailPage({ params }: Props) {
+export default async function AprobadorReportDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
@@ -27,9 +27,9 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
 
   const { data: me } = await supabase
     .from("profiles").select("role").eq("id", session.user.id).single();
-  if (me?.role !== "supervisor" && me?.role !== "admin") redirect("/dashboard");
+  if (me?.role !== "aprobador" && me?.role !== "admin") redirect("/dashboard");
 
-  // Verify supervisor can access this report
+  // Verify aprobador can access this report
   const { data: report } = await supabase
     .from("weekly_reports")
     .select("*, profiles!weekly_reports_user_id_fkey(full_name, email, department)")
@@ -38,8 +38,8 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
 
   if (!report) notFound();
 
-  // If supervisor, verify the report's owner is one of their supervised employees
-  if (me?.role === "supervisor") {
+  // If aprobador, verify the report's owner is one of their supervised employees
+  if (me?.role === "aprobador") {
     const { data: assignment } = await supabase
       .from("supervision_assignments")
       .select("id")
@@ -97,8 +97,8 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <Link href="/dashboard/supervisor" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-          ← Supervisar
+        <Link href="/dashboard/aprobador" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
+          ← Aprobaciones
         </Link>
         <h1 className="page-title mt-1">
           {report.title ?? (
@@ -270,6 +270,9 @@ export default async function SupervisorReportDetailPage({ params }: Props) {
                             </span>
                           )}
                           <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
+                          <span className="text-[var(--color-text-primary)]">
+                            {expense.merchant_name || "-"}
+                          </span>
                         </div>
                         <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
                           <span className="text-sm font-bold text-[var(--color-text-primary)]">

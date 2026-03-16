@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 const ROLE_LABELS: Record<string, string> = {
   employee:   "Empleado",
   seller:     "Vendedor",
-  supervisor: "Supervisor",
+  aprobador:  "Aprobador",
   chusmas:    "Chusmas",
 };
 
@@ -18,43 +18,67 @@ export default async function ViewerHomePage() {
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("role")
+    .select("id, role")
     .eq("id", session.user.id)
     .single();
   if (me?.role !== "chusmas" && me?.role !== "admin") redirect("/dashboard");
 
-  // Get employees this viewer can see (IDs from assignments, then fetch profiles separately)
-  const { data: assignments } = await supabase
-    .from("viewer_assignments")
-    .select("employee_id")
-    .eq("viewer_id", session.user.id);
+  const isChusma = me?.role === "chusmas";
 
-  const employeeIds = (assignments ?? []).map((a) => a.employee_id as string).filter(Boolean);
+  let employeeIds: string[] = [];
+  let employeesResult:
+    | {
+        id: string;
+        full_name: string;
+        email: string;
+        role: string;
+        department: string | null;
+      }[]
+    | null = null;
 
-  if (employeeIds.length === 0) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h1 className="page-title">Ver rendiciones</h1>
-          <p className="page-subtitle">Empleados asignados para solo lectura.</p>
+  if (isChusma) {
+    // Chusma: puede ver todas las personas (excepto otros chusmas/admin si queremos limitar)
+    const { data: employees } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role, department")
+      .in("role", ["employee", "seller", "aprobador", "chusmas"]);
+    employeesResult = (employees ?? []) as any;
+    employeeIds = employeesResult.map((e) => e.id);
+  } else {
+    // Viewer normal: respeta assignments
+    const { data: assignments } = await supabase
+      .from("viewer_assignments")
+      .select("employee_id")
+      .eq("viewer_id", session.user.id);
+
+    employeeIds = (assignments ?? []).map((a) => a.employee_id as string).filter(Boolean);
+
+    if (employeeIds.length === 0) {
+      return (
+        <div className="space-y-4">
+          <div>
+            <h1 className="page-title">Ver rendiciones</h1>
+            <p className="page-subtitle">Empleados asignados para solo lectura.</p>
+          </div>
+          <div className="card p-10 text-center space-y-2">
+            <p className="text-2xl">👀</p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              No tenés empleados asignados aún. El administrador debe asignarte qué rendiciones podés ver.
+            </p>
+          </div>
         </div>
-        <div className="card p-10 text-center space-y-2">
-          <p className="text-2xl">👀</p>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            No tenés empleados asignados aún. El administrador debe asignarte qué rendiciones podés ver.
-          </p>
-        </div>
-      </div>
-    );
+      );
+    }
+
+    const { data: employees } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role, department")
+      .in("id", employeeIds);
+    employeesResult = (employees ?? []) as any;
   }
 
-  const { data: employees } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, role, department")
-    .in("id", employeeIds);
-
   const employeeList =
-    (employees ?? []) as Array<{
+    (employeesResult ?? []) as Array<{
       id: string;
       full_name: string;
       email: string;
@@ -113,7 +137,11 @@ export default async function ViewerHomePage() {
           ).length;
 
           return (
-            <div key={emp.id} className="card p-4 space-y-3">
+            <Link
+              key={emp.id}
+              href={`/dashboard/viewer/employee/${emp.id}`}
+              className="card p-4 space-y-3 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
+            >
               {/* Employee header */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700">
@@ -156,7 +184,7 @@ export default async function ViewerHomePage() {
                 </div>
               </div>
 
-              {/* Recent reports */}
+              {/* Recent reports (preview solo lectura) */}
               {empReports.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">
@@ -173,10 +201,9 @@ export default async function ViewerHomePage() {
                     );
                     const expCount = (r.expenses as Array<{ id: string }> ?? []).length;
                     return (
-                      <Link
+                      <div
                         key={r.id}
-                        href={`/dashboard/viewer/reports/${r.id}`}
-                        className="flex items-center justify-between rounded-lg border border-[#f0ecf4] bg-[#fdfbff] px-3 py-2 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
+                        className="flex items-center justify-between rounded-lg border border-[#f0ecf4] bg-[#fdfbff] px-3 py-2"
                       >
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
@@ -195,14 +222,12 @@ export default async function ViewerHomePage() {
                         >
                           {r.status === "open" ? "Abierta" : "Cerrada"}
                         </span>
-                      </Link>
+                      </div>
                     );
                   })}
-                  {empReports.length > 3 && (
-                    <p className="text-center text-[0.65rem] text-[var(--color-text-muted)]">
-                      +{empReports.length - 3} más
-                    </p>
-                  )}
+                  <p className="text-center text-[0.65rem] text-[var(--color-text-muted)]">
+                    Click para acceder a todas las rendiciones de {emp.full_name}
+                  </p>
                 </div>
               )}
 
@@ -211,7 +236,7 @@ export default async function ViewerHomePage() {
                   Sin rendiciones aún.
                 </p>
               )}
-            </div>
+            </Link>
           );
         })}
       </div>

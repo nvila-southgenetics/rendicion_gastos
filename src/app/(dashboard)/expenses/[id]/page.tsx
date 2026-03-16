@@ -54,8 +54,8 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
   const isOwner = e.user_id === session.user.id;
   const canEditOwn =
     isOwner && (e.status === "pending" || e.status === "reviewing");
-  const canShowSupervisorActions =
-    !isOwner && (me?.role === "supervisor" || me?.role === "admin");
+  const canShowAprobadorActions =
+    !isOwner && (me?.role === "aprobador" || me?.role === "admin");
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -84,12 +84,12 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
 
       {isOwner && e.status === "reviewing" && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800">
-          Este gasto fue marcado para revisión por tu supervisor. Revisá los datos,
+          Este gasto fue marcado para revisión por tu aprobador. Revisá los datos,
           corregí lo necesario y usá <span className="font-semibold">“Corregir y reenviar”</span> para que vuelva a aprobarlo.
         </div>
       )}
 
-      {canShowSupervisorActions && (
+      {canShowAprobadorActions && (
         <SupervisorExpenseActions
           expenseId={e.id}
           currentStatus={(e.status ?? "pending") as "pending" | "approved" | "rejected" | "reviewing"}
@@ -235,7 +235,7 @@ async function updateExpenseStatusAction(
     return { ok: false, error: updateError.message };
   }
 
-  // Si el supervisor solicita revisión, notificar al empleado vía webhook de N8N
+  // Si el aprobador solicita revisión, notificar al empleado vía webhook de N8N
   if (status === "reviewing") {
     const webhookUrl = process.env.N8N_WEBHOOK_URL_REVISAR_GASTO;
     if (webhookUrl) {
@@ -260,7 +260,7 @@ async function updateExpenseStatusAction(
             body: JSON.stringify({
               expenseId,
               employeeEmail: employee.email,
-              supervisorName: supervisor.full_name,
+              aprobadorName: supervisor.full_name,
               comment,
             }),
           });
@@ -271,7 +271,7 @@ async function updateExpenseStatusAction(
     }
   }
 
-  // Si el supervisor rechaza, notificar al empleado y supervisor vía webhook de N8N
+  // Si el aprobador rechaza, notificar al empleado y aprobador vía webhook de N8N
   if (status === "rejected") {
     const webhookUrl = process.env.N8N_WEBHOOK_URL_RECHAZAR_GASTO;
     if (webhookUrl) {
@@ -292,9 +292,9 @@ async function updateExpenseStatusAction(
       ]);
 
       const employeeEmail = employee?.email ?? null;
-      const supervisorEmail = supervisor?.email ?? null;
+      const aprobadorEmail = supervisor?.email ?? null;
 
-      const rawEmails = [employeeEmail, supervisorEmail];
+      const rawEmails = [employeeEmail, aprobadorEmail];
       const targetEmails = Array.from(
         new Set(
           rawEmails.filter(
@@ -312,7 +312,7 @@ async function updateExpenseStatusAction(
         const payload = {
           expenseId,
           employeeName: employee.full_name,
-          supervisorName: supervisor.full_name,
+          aprobadorName: supervisor.full_name,
           amount: Number(expense.amount ?? 0),
           description: expense.description ?? "",
           comment,
@@ -340,7 +340,7 @@ async function updateExpenseStatusAction(
     }
   }
 
-  // Si el supervisor aprueba, notificar al empleado, supervisor, admin fijo y chusmas del mismo país vía webhook de N8N
+  // Si el aprobador aprueba, notificar al empleado, aprobador, admin fijo y chusmas del mismo país vía webhook de N8N
   if (status === "approved") {
     const webhookUrl = process.env.N8N_WEBHOOK_URL_APROBAR_GASTO;
     if (webhookUrl) {
@@ -365,7 +365,7 @@ async function updateExpenseStatusAction(
       ]);
 
       const employeeEmail = employee?.email ?? null;
-      const supervisorEmail = supervisor?.email ?? null;
+      const aprobadorEmail = supervisor?.email ?? null;
       const employeeCountry = employee?.country ?? null;
 
       const chusmasEmails =
@@ -378,7 +378,7 @@ async function updateExpenseStatusAction(
 
       const allEmails = [
         employeeEmail,
-        supervisorEmail,
+        aprobadorEmail,
         "vvasconcellos@southgenetics.com",
         ...chusmasEmails,
       ];
@@ -397,7 +397,7 @@ async function updateExpenseStatusAction(
         const payload = {
           expenseId,
           employeeName: employee.full_name,
-          supervisorName: supervisor.full_name,
+          aprobadorName: supervisor.full_name,
           amount: Number(expense.amount ?? 0),
           description: expense.description ?? "",
           targetEmails,

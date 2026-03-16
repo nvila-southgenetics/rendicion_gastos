@@ -4,12 +4,12 @@ import toast from "react-hot-toast";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Rol "seller" ya no se asigna; se mantiene solo para mostrar usuarios existentes
-type UserRole = "employee" | "seller" | "supervisor" | "chusmas" | "admin";
+type UserRole = "employee" | "seller" | "aprobador" | "chusmas" | "admin";
 
 const ROLE_LABELS: Record<string, string> = {
   employee:   "Empleado",
   seller:     "Vendedor",
-  supervisor: "Supervisor",
+  aprobador:  "Aprobador",
   chusmas:    "Chusmas (solo lectura)",
   admin:      "Administrador",
 };
@@ -17,12 +17,12 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   employee:   "bg-blue-100 text-blue-700",
   seller:     "bg-amber-100 text-amber-700",
-  supervisor: "bg-purple-100 text-purple-700",
+  aprobador:  "bg-purple-100 text-purple-700",
   chusmas:    "bg-gray-100 text-gray-700",
   admin:      "bg-red-100 text-red-700",
 };
 
-const SELECTABLE_ROLES: UserRole[] = ["employee", "supervisor", "chusmas", "admin"];
+const SELECTABLE_ROLES: UserRole[] = ["employee", "aprobador", "chusmas", "admin"];
 
 interface Props {
   userId:      string;

@@ -41,8 +41,21 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return null;
 
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+
+  const isChusma = me?.role === "chusmas";
+
+  const reportQuery = supabase.from("weekly_reports").select("*").eq("id", id);
+  if (!isChusma) {
+    reportQuery.eq("user_id", session.user.id);
+  }
+
   const [{ data: report }, { data: expenses }, { data: presets }] = await Promise.all([
-    supabase.from("weekly_reports").select("*").eq("id", id).eq("user_id", session.user.id).maybeSingle(),
+    reportQuery.maybeSingle(),
     supabase.from("expenses").select("*").eq("report_id", id).order("created_at", { ascending: false }),
     supabase.from("exchange_rate_presets").select("currency, rate"),
   ]);
@@ -51,8 +64,8 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
 
   const r = report as WeeklyReport;
   const isOpen = r.status === "open";
-  const isOwner = session.user.id === r.user_id;
-  const isSupervisor = !isOwner;
+  const isOwner = session.user.id === r.user_id && !isChusma;
+  const isSupervisor = session.user.id !== r.user_id && !isChusma;
   const startDate = new Date(r.week_start + "T12:00:00");
   const endDate   = new Date(r.week_end   + "T12:00:00");
 
@@ -67,7 +80,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
     | "paid";
 
   const canEmployeeEditReport =
-    workflowStatus === "draft" || workflowStatus === "needs_correction";
+    isOwner && (workflowStatus === "draft" || workflowStatus === "needs_correction");
   const isSubmittedOrBeyond =
     workflowStatus === "submitted" ||
     workflowStatus === "approved" ||
@@ -262,6 +275,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                 <tr>
                   <th className="px-4 py-3 font-medium">Descripción</th>
                   <th className="px-4 py-3 font-medium">Categoría</th>
+                  <th className="px-4 py-3 font-medium">Empresa</th>
                   <th className="px-4 py-3 font-medium text-right">Monto original</th>
                   {hasRates && <th className="px-4 py-3 font-medium text-right">USD</th>}
                   <th className="px-4 py-3 font-medium">Estado</th>
@@ -293,6 +307,9 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                       </td>
                       <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-muted)]">
                         {CATEGORY_LABELS[expense.category] ?? expense.category}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-primary)]">
+                        {expense.merchant_name || "-"}
                       </td>
                       <td className="px-4 py-3 align-middle text-right text-sm font-semibold whitespace-nowrap">
                         {fmt(Number(expense.amount))}{" "}

@@ -5,17 +5,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 const ROLE_LABELS: Record<string, string> = {
   employee:   "Empleado",
   seller:     "Vendedor",
-  supervisor: "Supervisor",
+  aprobador:  "Aprobador",
 };
 
-export default async function SupervisorHomePage() {
+export default async function AprobadorHomePage() {
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return null;
 
   const { data: me } = await supabase
     .from("profiles").select("role").eq("id", session.user.id).single();
-  if (me?.role !== "supervisor" && me?.role !== "admin") redirect("/dashboard");
+  if (me?.role !== "aprobador" && me?.role !== "admin") redirect("/dashboard");
 
   // Get supervised employees
   const { data: assignments } = await supabase
@@ -31,8 +31,8 @@ export default async function SupervisorHomePage() {
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="page-title">Supervisar</h1>
-          <p className="page-subtitle">Tus empleados asignados.</p>
+          <h1 className="page-title">Aprobaciones</h1>
+          <p className="page-subtitle">Tus empleados asignados para aprobar.</p>
         </div>
         <div className="card p-10 text-center space-y-2">
           <p className="text-2xl">👁</p>
@@ -62,9 +62,9 @@ export default async function SupervisorHomePage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="page-title">Supervisar</h1>
+          <h1 className="page-title">Aprobaciones</h1>
         <p className="page-subtitle">
-          Supervisás a {employees.length} {employees.length === 1 ? "persona" : "personas"}.
+          Aprobás rendiciones de {employees.length} {employees.length === 1 ? "persona" : "personas"}.
         </p>
       </div>
 
@@ -80,7 +80,7 @@ export default async function SupervisorHomePage() {
           return (
             <Link
               key={emp.id}
-              href={`/dashboard/supervisor/employee/${emp.id}`}
+              href={`/dashboard/aprobador/employee/${emp.id}`}
               className="card p-4 space-y-3 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
             >
               {/* Employee header */}

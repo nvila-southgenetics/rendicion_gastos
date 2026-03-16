@@ -64,11 +64,22 @@ export default async function ReportsPage() {
 
   if (!session) return null;
 
-  const { data: reports } = await supabase
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+
+  const isChusma = me?.role === "chusmas";
+
+  const baseQuery = supabase
     .from("weekly_reports")
     .select("*, expenses(count)")
-    .eq("user_id", session.user.id)
     .order("week_start", { ascending: false });
+
+  const { data: reports } = isChusma
+    ? await baseQuery
+    : await baseQuery.eq("user_id", session.user.id);
 
   return (
     <div className="space-y-5">

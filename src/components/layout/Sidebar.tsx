@@ -8,7 +8,7 @@ const baseNavItems = [
   { href: "/dashboard",            label: "Resumen",     icon: LayoutDashboard, adminOnly: false, supervisorOnly: false, viewerOnly: false },
   { href: "/dashboard/reports",    label: "Rendiciones", icon: FileSpreadsheet, adminOnly: false, supervisorOnly: false, viewerOnly: false },
   { href: "/dashboard/expenses",   label: "Histórico",   icon: Receipt,         adminOnly: false, supervisorOnly: false, viewerOnly: false },
-  { href: "/dashboard/supervisor", label: "Supervisar",  icon: Eye,             adminOnly: false, supervisorOnly: true,  viewerOnly: false },
+  { href: "/dashboard/aprobador",  label: "Aprobaciones",icon: Eye,             adminOnly: false, supervisorOnly: true,  viewerOnly: false },
   { href: "/dashboard/viewer",     label: "Ver rend.",   icon: Eye,             adminOnly: false, supervisorOnly: false, viewerOnly: true  },
   { href: "/dashboard/admin",      label: "Admin",       icon: Users,           adminOnly: true,  supervisorOnly: false, viewerOnly: false },
 ];

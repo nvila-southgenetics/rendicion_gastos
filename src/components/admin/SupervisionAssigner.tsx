@@ -52,7 +52,7 @@ export function SupervisionAssigner({
       return;
     }
     setAssignments((prev) => [...prev, { id: data.id, employee_id: emp.id, employee: emp }]);
-    toast.success(`${emp.full_name} asignado a ${supervisorName}`);
+    toast.success(`${emp.full_name} asignado a ${supervisorName} (aprobador)`);
     setAdding(false);
   }
 
@@ -83,7 +83,7 @@ export function SupervisionAssigner({
               className="flex items-center gap-1.5 rounded-full bg-purple-50 border border-purple-200 pl-2.5 pr-1.5 py-1 text-xs text-purple-800"
             >
               <span className="font-medium">{a.employee.full_name}</span>
-              <span className="text-purple-400 text-[0.65rem]">({a.employee.role === "supervisor" ? "Supervisor" : "Empleado"})</span>
+              <span className="text-purple-400 text-[0.65rem]">({a.employee.role === "aprobador" ? "Aprobador" : "Empleado"})</span>
               <button
                 onClick={() => removeEmployee(a.id, a.employee.full_name)}
                 disabled={saving}

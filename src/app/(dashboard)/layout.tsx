@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       .eq("id", session.user.id)
       .single();
     isAdmin      = profile?.role === "admin";
-    isSupervisor = profile?.role === "supervisor";
+    isSupervisor = profile?.role === "aprobador";
     isViewer     = profile?.role === "chusmas";
   }
 

@@ -11,7 +11,7 @@ import { CountryFilter } from "@/components/admin/CountryFilter";
 const ROLE_LABELS: Record<string, string> = {
   employee:   "Empleado",
   seller:     "Vendedor",
-  supervisor: "Supervisor",
+  supervisor: "Aprobador", // nombre antiguo de rol en DB
   chusmas:    "Chusmas (solo lectura)",
   admin:      "Administrador",
 };
@@ -106,7 +106,7 @@ export default async function AdminUsersPage({
     .filter((u) => u.role !== "admin")
     .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email, role: u.role }));
 
-  const supervisors = userList.filter((u) => u.role === "supervisor");
+  const supervisors = userList.filter((u) => u.role === "aprobador" || u.role === "supervisor");
   const viewers     = (rawUsers ?? []).filter((u) => u.role === "chusmas");
 
   // Para chusmas: empleados asignables = todos los usuarios (sin filtrar por país) menos el propio chusmas
@@ -121,7 +121,7 @@ export default async function AdminUsersPage({
     <div className="space-y-6">
       <div>
         <h1 className="page-title">Gestión de usuarios</h1>
-        <p className="page-subtitle">Administrá roles y asignaciones de supervisión.</p>
+        <p className="page-subtitle">Administrá roles y asignaciones de aprobación.</p>
       </div>
 
       <Suspense fallback={null}>
@@ -264,9 +264,9 @@ export default async function AdminUsersPage({
       {supervisors.length > 0 && (
         <div className="space-y-3">
           <div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Asignaciones de supervisión</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Asignaciones de aprobación</h2>
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-              Definí qué empleados supervisa cada supervisor.
+              Definí qué empleados aprueba cada aprobador.
             </p>
           </div>
 
@@ -287,7 +287,7 @@ export default async function AdminUsersPage({
                   </div>
                   <div>
                     <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)] mb-2">
-                      Supervisa a:
+                      Aprueba rendiciones de:
                     </p>
                     <SupervisionAssigner
                       supervisorId={sup.id}

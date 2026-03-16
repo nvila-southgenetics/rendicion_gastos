@@ -46,18 +46,6 @@ export default async function ViewerReportDetailPage({ params }: Props) {
 
   if (!report) notFound();
 
-  // Verificar que el viewer esté asignado a este empleado (si no es admin)
-  if (me?.role === "chusmas") {
-    const { data: assignment } = await supabase
-      .from("viewer_assignments")
-      .select("id")
-      .eq("viewer_id", session.user.id)
-      .eq("employee_id", report.user_id)
-      .maybeSingle();
-
-    if (!assignment) redirect("/dashboard/viewer");
-  }
-
   const owner = report.profiles as {
     full_name: string;
     email: string;

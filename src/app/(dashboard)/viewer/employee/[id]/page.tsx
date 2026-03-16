@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -6,54 +6,38 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function SupervisorEmployeeDetailPage({ params }: Props) {
+export default async function ViewerEmployeeReportsPage({ params }: Props) {
   const { id: employeeId } = await params;
   const supabase = await createSupabaseServerClient();
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   if (!session) return null;
 
-  // Verificar que el usuario es supervisor o admin
   const { data: me } = await supabase
     .from("profiles")
-    .select("id, role, full_name")
+    .select("role")
     .eq("id", session.user.id)
     .single();
 
-  if (me?.role !== "supervisor" && me?.role !== "admin") {
+  if (me?.role !== "chusmas" && me?.role !== "admin") {
     redirect("/dashboard");
   }
 
-  // Verificar que realmente supervise a este empleado (si no es admin)
-  if (me.role === "supervisor") {
-    const { data: assignment } = await supabase
-      .from("supervision_assignments")
-      .select("id")
-      .eq("supervisor_id", me.id)
-      .eq("employee_id", employeeId)
-      .maybeSingle();
-
-    if (!assignment) {
-      redirect("/dashboard/supervisor");
-    }
-  }
-
-  // Datos del empleado
   const { data: employee } = await supabase
     .from("profiles")
     .select("id, full_name, email, department, role")
     .eq("id", employeeId)
     .maybeSingle();
 
-  if (!employee) notFound();
+  if (!employee) {
+    redirect("/dashboard/viewer");
+  }
 
-  // Todas las rendiciones del empleado
   const { data: reports } = await supabase
     .from("weekly_reports")
-    .select("id, title, week_start, week_end, status, workflow_status, budget_max, expenses(id, status)")
+    .select("id, title, week_start, week_end, status, workflow_status, expenses(id, status)")
     .eq("user_id", employeeId)
     .order("created_at", { ascending: false });
 
@@ -65,7 +49,6 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
       week_end: string;
       status: "open" | "closed";
       workflow_status: string | null;
-      budget_max: number | null;
       expenses: Array<{ id: string; status: string | null }> | null;
     }>;
 
@@ -73,19 +56,19 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
     <div className="space-y-5">
       <div>
         <Link
-          href="/dashboard/supervisor"
+          href="/dashboard/viewer"
           className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
         >
-          ← Volver a supervisar
+          ← Volver a ver rendiciones
         </Link>
         <h1 className="page-title mt-1">Rendiciones de {employee.full_name}</h1>
         <p className="page-subtitle">
-          Podés ver y revisar todas las rendiciones de este empleado.
+          Vista solo lectura de todas las rendiciones asociadas a este empleado.
         </p>
       </div>
 
       <div className="card p-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-purple-700">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700">
           {employee.full_name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -114,18 +97,20 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
           </div>
           <div className="divide-y divide-[#f0ecf4]">
             {reportList.map((r) => {
-              const startDate = new Date(r.week_start + "T12:00:00").toLocaleDateString(
-                "es-UY",
-                { day: "numeric", month: "short" },
-              );
-              const endDate = new Date(r.week_end + "T12:00:00").toLocaleDateString(
-                "es-UY",
-                { day: "numeric", month: "short", year: "numeric" },
-              );
+              const startDate = new Date(
+                r.week_start + "T12:00:00",
+              ).toLocaleDateString("es-UY", {
+                day: "numeric",
+                month: "short",
+              });
+              const endDate = new Date(
+                r.week_end + "T12:00:00",
+              ).toLocaleDateString("es-UY", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              });
               const expCount = (r.expenses ?? []).length;
-              const pendingExpenses = (r.expenses ?? []).filter(
-                (e) => e.status === "pending",
-              ).length;
 
               const ws = (r.workflow_status ?? "draft") as
                 | "draft"
@@ -159,7 +144,7 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
               return (
                 <Link
                   key={r.id}
-                  href={`/dashboard/supervisor/reports/${r.id}`}
+                  href={`/dashboard/viewer/reports/${r.id}`}
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#fdfbff] transition-colors"
                 >
                   <div className="min-w-0 flex-1">
@@ -168,8 +153,7 @@ export default async function SupervisorEmployeeDetailPage({ params }: Props) {
                     </p>
                     <p className="text-[0.65rem] text-[var(--color-text-muted)]">
                       {startDate} – {endDate} · {expCount} gasto
-                      {expCount !== 1 ? "s" : ""} · {pendingExpenses} pendiente
-                      {pendingExpenses !== 1 ? "s" : ""}
+                      {expCount !== 1 ? "s" : ""}
                     </p>
                   </div>
                   <span
