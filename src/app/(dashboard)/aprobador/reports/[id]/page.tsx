@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
 import { approveReportAction } from "@/app/(dashboard)/reports/[id]/approveReportAction";
 import { returnReportAction } from "@/app/(dashboard)/reports/[id]/returnReportAction";
 import { PayReportModal } from "@/components/reports/PayReportModal";
@@ -94,9 +94,18 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
   const effectiveRates = { ...globalPresets, ...reportRates };
 
   const budgetMax    = report.budget_max ? Number(report.budget_max) : null;
-  const totalUSD     = totalInUSD(expenseList.map((e) => ({ amount: Number(e.amount), currency: e.currency ?? "UYU" })), effectiveRates);
+  const budgetCurrency = report.budget_currency ?? "USD";
+  const totalInBudgetCurrency = totalInCurrency(
+    expenseList.map((e) => ({ amount: Number(e.amount), currency: e.currency ?? "UYU" })),
+    budgetCurrency,
+    effectiveRates,
+  );
   const hasRates     = Object.keys(effectiveRates).length > 0;
-  const budgetOverrun = !!(budgetMax && totalUSD !== null && totalUSD > budgetMax);
+  const budgetOverrun = !!(
+    budgetMax &&
+    totalInBudgetCurrency !== null &&
+    totalInBudgetCurrency > budgetMax
+  );
 
   const pendingCount   = expenseList.filter((e) => e.status === "pending").length;
   const reviewingCount = expenseList.filter((e) => e.status === "reviewing").length;
@@ -171,7 +180,7 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
               budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
             }`}
           >
-            Presupuesto: {totalUSD !== null ? `USD ${fmt(totalUSD)}` : "—"} / USD {fmt(budgetMax)}
+            Presupuesto: {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
             {budgetOverrun && " ⚠ Excedido"}
           </span>
         )}
@@ -185,7 +194,7 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
             </a>
           )}
           {isPagador && workflowStatus === "approved" && (
-            <PayReportModal reportId={report.id} suggestedAmount={totalUSD} />
+            <PayReportModal reportId={report.id} suggestedAmount={totalInBudgetCurrency} />
           )}
           {workflowStatus === "submitted" && (
             <>
@@ -238,22 +247,22 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
       </div>
 
       {/* Budget bar */}
-      {budgetMax && totalUSD !== null && (
+      {budgetMax && totalInBudgetCurrency !== null && (
         <div className="card p-4 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold uppercase text-[var(--color-text-muted)]">Presupuesto</span>
             <span className={`font-bold ${budgetOverrun ? "text-red-600" : "text-[var(--color-text-primary)]"}`}>
-              USD {fmt(totalUSD)} / USD {fmt(budgetMax)}
+              {budgetCurrency} {fmt(totalInBudgetCurrency)} / {budgetCurrency} {fmt(budgetMax)}
             </span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#f0ecf4]">
             <div
-              className={`h-full rounded-full transition-all ${budgetOverrun ? "bg-red-500" : budgetMax && totalUSD / budgetMax >= 0.8 ? "bg-amber-500" : "bg-[var(--color-secondary)]"}`}
-              style={{ width: `${Math.min((totalUSD / budgetMax) * 100, 100)}%` }}
+              className={`h-full rounded-full transition-all ${budgetOverrun ? "bg-red-500" : budgetMax && totalInBudgetCurrency / budgetMax >= 0.8 ? "bg-amber-500" : "bg-[var(--color-secondary)]"}`}
+              style={{ width: `${Math.min((totalInBudgetCurrency / budgetMax) * 100, 100)}%` }}
             />
           </div>
           <p className="text-right text-[0.65rem] text-[var(--color-text-muted)]">
-            {((totalUSD / budgetMax) * 100).toFixed(1)}% del presupuesto utilizado
+            {((totalInBudgetCurrency / budgetMax) * 100).toFixed(1)}% del presupuesto utilizado
           </p>
         </div>
       )}
@@ -281,7 +290,7 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
               </p>
               <p className="mt-0.5">
                 {typeof report.amount_paid === "number"
-                  ? `USD ${fmt(Number(report.amount_paid))}`
+                  ? `${budgetCurrency} ${fmt(Number(report.amount_paid))}`
                   : "—"}
               </p>
             </div>

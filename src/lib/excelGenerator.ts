@@ -69,6 +69,7 @@ export async function generateExcelExport(reportId: string): Promise<{
     weekEnd: report.week_end,
     closedAt: report.closed_at,
     exchangeRates,
+    budgetCurrency: report.budget_currency ?? "USD",
     expenses: (expenses ?? []) as any,
   });
 

@@ -6,6 +6,14 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+const BUDGET_CURRENCIES = [
+  { value: "USD", label: "Dólar (USD)" },
+  { value: "UYU", label: "Peso uruguayo (UYU)" },
+  { value: "ARS", label: "Peso argentino (ARS)" },
+  { value: "PYG", label: "Guaraní paraguayo (PYG)" },
+  { value: "BRL", label: "Real brasileño (BRL)" },
+] as const;
+
 export function NewReportForm() {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
@@ -16,6 +24,7 @@ export function NewReportForm() {
   const [fechaInicio, setFechaInicio] = useState(today);
   const [fechaCierre, setFechaCierre] = useState(today);
   const [presupuesto, setPresupuesto] = useState("");
+  const [budgetCurrency, setBudgetCurrency] = useState("USD");
   const [notas, setNotas]             = useState("");
   const [saving, setSaving]           = useState(false);
 
@@ -70,6 +79,7 @@ export function NewReportForm() {
         week_end:       fechaCierre,
         status:         "open",
         budget_max:     presupuestoNum,
+        budget_currency: budgetCurrency,
         notes:          notas.trim() || null,
         exchange_rates: Object.keys(exchange_rates).length > 0 ? exchange_rates : null,
       })
@@ -152,12 +162,13 @@ export function NewReportForm() {
       {/* Presupuesto */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-[var(--color-text-primary)]">
-          Presupuesto máximo en USD{" "}
+          Presupuesto máximo{" "}
           <span className="font-normal text-[var(--color-text-muted)]">(opcional)</span>
         </label>
+        <div className="grid gap-2 sm:grid-cols-[1fr,220px]">
         <div className="flex h-11 overflow-hidden rounded-xl border border-[#d4cfe0] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20 bg-white transition-all">
           <span className="flex items-center bg-[#f5f1f8] px-3 text-xs font-semibold text-[var(--color-text-muted)] border-r border-[#d4cfe0] shrink-0 whitespace-nowrap">
-            USD
+            {budgetCurrency}
           </span>
           <input
             type="number"
@@ -171,6 +182,18 @@ export function NewReportForm() {
           <span className="flex items-center bg-[#f5f1f8] px-3 text-[0.65rem] text-[var(--color-text-muted)] border-l border-[#d4cfe0] shrink-0">
             máx.
           </span>
+        </div>
+          <select
+            className="input"
+            value={budgetCurrency}
+            onChange={(e) => setBudgetCurrency(e.target.value)}
+          >
+            {BUDGET_CURRENCIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
         </div>
         <p className="text-[0.7rem] text-[var(--color-text-muted)]">
           Si lo definís, se mostrará un indicador de progreso al cargar gastos.

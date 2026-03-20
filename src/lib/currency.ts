@@ -17,6 +17,35 @@ export function toUSD(
 }
 
 /**
+ * Convierte desde USD a una moneda destino usando rates (1 USD = X moneda).
+ */
+export function fromUSD(
+  amountUsd: number,
+  targetCurrency: string,
+  rates: Record<string, number> | null | undefined
+): number | null {
+  if (targetCurrency === "USD") return amountUsd;
+  const rate = rates?.[targetCurrency];
+  if (!rate || rate <= 0) return null;
+  return amountUsd * rate;
+}
+
+/**
+ * Convierte un monto entre monedas usando USD como pivote.
+ */
+export function convertAmount(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: Record<string, number> | null | undefined
+): number | null {
+  if (fromCurrency === toCurrency) return amount;
+  const usd = toUSD(amount, fromCurrency, rates);
+  if (usd === null) return null;
+  return fromUSD(usd, toCurrency, rates);
+}
+
+/**
  * Suma todos los gastos convertidos a USD.
  * Retorna null si falta al menos un tipo de cambio.
  */
@@ -29,6 +58,29 @@ export function totalInUSD(
     const usd = toUSD(Number(e.amount), e.currency ?? "UYU", rates);
     if (usd === null) return null;
     sum += usd;
+  }
+  return sum;
+}
+
+/**
+ * Suma todos los gastos convertidos a una moneda destino.
+ * Retorna null si falta al menos un tipo de cambio.
+ */
+export function totalInCurrency(
+  expenses: { amount: number; currency: string | null }[],
+  targetCurrency: string,
+  rates: Record<string, number> | null | undefined
+): number | null {
+  let sum = 0;
+  for (const e of expenses) {
+    const converted = convertAmount(
+      Number(e.amount),
+      e.currency ?? "UYU",
+      targetCurrency,
+      rates,
+    );
+    if (converted === null) return null;
+    sum += converted;
   }
   return sum;
 }

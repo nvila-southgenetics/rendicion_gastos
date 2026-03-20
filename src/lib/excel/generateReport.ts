@@ -19,6 +19,25 @@ function toUSD(amount: number, currency: string, rates: Record<string, number>):
   return amount / rate;
 }
 
+function fromUSD(amountUsd: number, currency: string, rates: Record<string, number>): number | null {
+  if (currency === "USD") return amountUsd;
+  const rate = rates[currency];
+  if (!rate || rate <= 0) return null;
+  return amountUsd * rate;
+}
+
+function convertAmount(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: Record<string, number>,
+): number | null {
+  if (fromCurrency === toCurrency) return amount;
+  const usd = toUSD(amount, fromCurrency, rates);
+  if (usd === null) return null;
+  return fromUSD(usd, toCurrency, rates);
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   transport:       "Transporte",
   food:            "Comida y bebida",
@@ -44,9 +63,19 @@ export function generateReportWorkbook(args: {
   weekEnd: string;
   closedAt: string | null;
   exchangeRates: Record<string, number>;
+  budgetCurrency: string;
   expenses: ExpenseRow[];
 }) {
-  const { employeeName, title, weekStart, weekEnd, closedAt, exchangeRates, expenses } = args;
+  const {
+    employeeName,
+    title,
+    weekStart,
+    weekEnd,
+    closedAt,
+    exchangeRates,
+    budgetCurrency,
+    expenses,
+  } = args;
 
   const startLabel = new Date(weekStart + "T12:00:00").toLocaleDateString("es-UY");
   const endLabel   = new Date(weekEnd   + "T12:00:00").toLocaleDateString("es-UY");
@@ -60,6 +89,7 @@ export function generateReportWorkbook(args: {
   rows.push([`Empleado: ${employeeName}`]);
   rows.push([`Período: ${startLabel} — ${endLabel}`]);
   rows.push([`Cierre: ${closedAt ? new Date(closedAt).toLocaleDateString("es-UY") : "Abierta"}`]);
+  rows.push([`Moneda de presupuesto: ${budgetCurrency}`]);
   if (hasRates) {
     const ratesSummary = Object.entries(exchangeRates)
       .map(([c, r]) => `1 USD = ${r} ${c}`)
@@ -76,7 +106,7 @@ export function generateReportWorkbook(args: {
 
   // ── Filas de gastos ───────────────────────────────────────
   const totalsByCurrency: Record<string, number> = {};
-  let totalUSD = 0;
+  let totalInBudgetCurrency = 0;
   let allConvertible = true;
 
   for (const e of expenses) {
@@ -85,9 +115,14 @@ export function generateReportWorkbook(args: {
 
     totalsByCurrency[currency] = (totalsByCurrency[currency] ?? 0) + amount;
 
-    const usd = toUSD(amount, currency, exchangeRates);
-    if (usd === null) allConvertible = false;
-    else totalUSD += usd;
+    const inBudgetCurrency = convertAmount(
+      amount,
+      currency,
+      budgetCurrency,
+      exchangeRates,
+    );
+    if (inBudgetCurrency === null) allConvertible = false;
+    else totalInBudgetCurrency += inBudgetCurrency;
 
     const row: any[] = [
       e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("es-UY") : "",
@@ -128,10 +163,10 @@ export function generateReportWorkbook(args: {
     rows.push(row);
   }
 
-  // Total unificado en USD (si hay tipo de cambio para todas las monedas)
+  // Total unificado en moneda de presupuesto (si hay tipo de cambio para todas las monedas)
   if (hasRates && allConvertible && expenses.length > 0) {
-    const row: any[] = ["", "", "", "TOTAL USD", "", ""];
-    row.push(Number(totalUSD.toFixed(2)));
+    const row: any[] = ["", "", "", `TOTAL ${budgetCurrency}`, "", ""];
+    row.push(Number(totalInBudgetCurrency.toFixed(2)));
     row.push("", "", "");
     rows.push(row);
   }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CurrencyBreakdown } from "./CurrencyBreakdown";
-import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { totalInCurrency, fmt } from "@/lib/currency";
 
 interface SimpleExpense {
   id:           string;
@@ -15,6 +15,7 @@ interface SimpleExpense {
 interface RealtimeBudgetSectionProps {
   reportId:    string;
   budgetMax:   number | null;
+  budgetCurrency: string;
   savedRates:  Record<string, number>;
   /** Lista inicial de gastos para el primer render */
   initialExpenses: SimpleExpense[];
@@ -23,6 +24,7 @@ interface RealtimeBudgetSectionProps {
 export function RealtimeBudgetSection({
   reportId,
   budgetMax,
+  budgetCurrency,
   savedRates,
   initialExpenses,
 }: RealtimeBudgetSectionProps) {
@@ -67,19 +69,24 @@ export function RealtimeBudgetSection({
     (e) => e.status !== "rejected",
   );
 
-  const totalUSD = totalInUSD(
+  const totalInBudgetCurrency = totalInCurrency(
     effectiveExpenses.map((e) => ({
       amount: Number(e.amount),
       currency: e.currency ?? "UYU",
     })),
+    budgetCurrency,
     savedRates,
   );
 
   const hasRates    = Object.keys(savedRates).length > 0;
-  const budgetPct   = budgetMax && totalUSD !== null
-    ? Math.min((totalUSD / budgetMax) * 100, 100)
+  const budgetPct   = budgetMax && totalInBudgetCurrency !== null
+    ? Math.min((totalInBudgetCurrency / budgetMax) * 100, 100)
     : null;
-  const budgetOverrun = !!(budgetMax && totalUSD !== null && totalUSD > budgetMax);
+  const budgetOverrun = !!(
+    budgetMax &&
+    totalInBudgetCurrency !== null &&
+    totalInBudgetCurrency > budgetMax
+  );
   const pendingCount  = expenses.filter((e) => e.status === "pending").length;
 
   const totalsByCurrency: Record<string, number> = {};
@@ -110,8 +117,15 @@ export function RealtimeBudgetSection({
               Presupuesto
             </span>
             <span className={`text-xs font-bold tabular-nums ${budgetOverrun ? "text-red-600" : "text-[var(--color-text-primary)]"}`}>
-              {totalUSD !== null ? `USD ${fmt(totalUSD)}` : hasRates ? "calculando…" : "—"}
-              <span className="font-normal text-[var(--color-text-muted)]"> / USD {fmt(budgetMax)}</span>
+              {totalInBudgetCurrency !== null
+                ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}`
+                : hasRates
+                  ? "calculando…"
+                  : "—"}
+              <span className="font-normal text-[var(--color-text-muted)]">
+                {" "}
+                / {budgetCurrency} {fmt(budgetMax)}
+              </span>
               {budgetOverrun && <span className="ml-1 text-red-600">⚠ Excedido</span>}
             </span>
           </div>
@@ -147,7 +161,9 @@ export function RealtimeBudgetSection({
         <div className="card px-4 py-3">
           <CurrencyBreakdown
             totalsByCurrency={totalsByCurrency}
-            totalUSD={totalUSD}
+            totalUSD={
+              budgetCurrency === "USD" ? totalInBudgetCurrency : null
+            }
             budgetMax={budgetMax}
             budgetOverrun={budgetOverrun}
           />

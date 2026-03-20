@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/auth/getMyProfile";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { RealtimeBudgetSection } from "@/components/reports/RealtimeBudgetSection";
-import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
 import type { Tables } from "@/types/database";
 import { submitReportAction } from "./submitReportAction";
 import { returnReportAction } from "./returnReportAction";
@@ -95,16 +95,22 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
   const effectiveRates: Record<string, number> = { ...globalPresets, ...reportRates };
 
   const budgetMax      = r.budget_max ? Number(r.budget_max) : null;
+  const budgetCurrency = r.budget_currency ?? "USD";
   const hasRates       = Object.keys(effectiveRates).length > 0;
   const totalCalculado = nonRejectedExpenses.reduce((acc, e) => acc + Number(e.amount ?? 0), 0);
-  const totalUSD       = totalInUSD(
+  const totalInBudgetCurrency = totalInCurrency(
     nonRejectedExpenses.map((e) => ({
       amount: Number(e.amount),
       currency: e.currency ?? "UYU",
     })),
+    budgetCurrency,
     effectiveRates,
   );
-  const budgetOverrun  = !!(budgetMax && totalUSD !== null && totalUSD > budgetMax);
+  const budgetOverrun  = !!(
+    budgetMax &&
+    totalInBudgetCurrency !== null &&
+    totalInBudgetCurrency > budgetMax
+  );
 
   return (
     <div className="space-y-4">
@@ -200,6 +206,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
       <RealtimeBudgetSection
         reportId={r.id}
         budgetMax={budgetMax}
+        budgetCurrency={budgetCurrency}
         savedRates={effectiveRates}
         initialExpenses={nonRejectedExpenses.map((e) => ({
           id:       e.id,
@@ -232,7 +239,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
               </p>
               <p className="mt-0.5">
                 {typeof r.amount_paid === "number"
-                  ? `USD ${fmt(Number(r.amount_paid))}`
+                  ? `${budgetCurrency} ${fmt(Number(r.amount_paid))}`
                   : "—"}
               </p>
             </div>
@@ -427,7 +434,9 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                   </td>
                   {hasRates && (
                     <td className="px-4 py-3 text-right text-sm font-bold text-[var(--color-primary)]">
-                      {totalUSD !== null ? `USD ${fmt(totalUSD)}` : "—"}
+                      {totalInBudgetCurrency !== null
+                        ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}`
+                        : "—"}
                     </td>
                   )}
                   <td colSpan={2} />
@@ -439,7 +448,9 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
             <div className="flex items-center justify-between border-t-2 border-[#e5e2ea] bg-[#fdfbff] px-4 py-3 md:hidden">
               <span className="text-xs font-semibold uppercase text-[var(--color-text-muted)]">Total</span>
               <span className={`text-sm font-bold ${budgetOverrun ? "text-red-600" : "text-[var(--color-primary)]"}`}>
-                {totalUSD !== null ? `USD ${fmt(totalUSD)}` : `${fmt(totalCalculado)} (orig.)`}
+                {totalInBudgetCurrency !== null
+                  ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}`
+                  : `${fmt(totalCalculado)} (orig.)`}
               </span>
             </div>
           </>

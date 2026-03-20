@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
-import { toUSD, totalInUSD, fmt } from "@/lib/currency";
+import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
 import { PayReportModal } from "@/components/reports/PayReportModal";
 import { getMyProfile } from "@/lib/auth/getMyProfile";
 
@@ -59,11 +59,17 @@ export default async function ViewerReportDetailPage({ params }: Props) {
   const effectiveRates = { ...globalPresets, ...reportRates };
 
   const budgetMax = report.budget_max ? Number(report.budget_max) : null;
-  const totalUSD = totalInUSD(
+  const budgetCurrency = report.budget_currency ?? "USD";
+  const totalInBudgetCurrency = totalInCurrency(
     expenseList.map((e) => ({ amount: Number(e.amount), currency: e.currency ?? "UYU" })),
+    budgetCurrency,
     effectiveRates,
   );
-  const budgetOverrun = !!(budgetMax && totalUSD !== null && totalUSD > budgetMax);
+  const budgetOverrun = !!(
+    budgetMax &&
+    totalInBudgetCurrency !== null &&
+    totalInBudgetCurrency > budgetMax
+  );
 
   const pendingCount = expenseList.filter((e) => e.status === "pending").length;
   const reviewingCount = expenseList.filter((e) => e.status === "reviewing").length;
@@ -151,13 +157,13 @@ export default async function ViewerReportDetailPage({ params }: Props) {
               budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
             }`}
           >
-            Presupuesto: {totalUSD !== null ? `USD ${fmt(totalUSD)}` : "—"} / USD {fmt(budgetMax)}
+            Presupuesto: {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
             {budgetOverrun && " ⚠ Excedido"}
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
           {isPagador && workflowStatus === "approved" && (
-            <PayReportModal reportId={report.id} suggestedAmount={totalUSD} />
+            <PayReportModal reportId={report.id} suggestedAmount={totalInBudgetCurrency} />
           )}
         </div>
       </div>
@@ -185,7 +191,7 @@ export default async function ViewerReportDetailPage({ params }: Props) {
               </p>
               <p className="mt-0.5">
                 {typeof report.amount_paid === "number"
-                  ? `USD ${fmt(Number(report.amount_paid))}`
+                  ? `${budgetCurrency} ${fmt(Number(report.amount_paid))}`
                   : "—"}
               </p>
             </div>
