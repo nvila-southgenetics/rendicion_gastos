@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
@@ -58,6 +59,14 @@ function LoginForm() {
           required
           minLength={6}
         />
+        <div className="pt-1 text-right">
+          <Link
+            href="/forgot-password"
+            className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
       </div>
       <button
         type="submit"
