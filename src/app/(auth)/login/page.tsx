@@ -59,7 +59,7 @@ function LoginForm() {
           required
           minLength={6}
         />
-        <div className="pt-1 text-right">
+        <div className="pt-1 text-center">
           <Link
             href="/forgot-password"
             className="text-xs font-medium text-[var(--color-primary)] hover:underline"
