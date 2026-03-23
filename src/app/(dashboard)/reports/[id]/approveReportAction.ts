@@ -107,6 +107,10 @@ export async function approveReportAction(formData: FormData) {
         } else {
           effectivePayers = adminPayers ?? [];
         }
+      } else {
+        console.warn(
+          "No se pudo usar fallback de service role para pagadores: faltan SUPABASE_SERVICE_ROLE_KEY o NEXT_PUBLIC_SUPABASE_URL.",
+        );
       }
     }
 
@@ -116,10 +120,14 @@ export async function approveReportAction(formData: FormData) {
         payersError,
       );
     } else {
-      const payerEmailArray =
-        (effectivePayers ?? [])
-          .map((p) => p.email)
-          .filter((e): e is string => typeof e === "string" && e.trim().length > 0) ?? [];
+      const payerEmailArray = Array.from(
+        new Set(
+          (effectivePayers ?? [])
+            .map((p) => p.email)
+            .filter((e): e is string => typeof e === "string" && e.trim().length > 0)
+            .map((e) => e.trim().toLowerCase()),
+        ),
+      );
 
       const pagadorEmails = payerEmailArray.join(",");
       const employeeEmail =
@@ -154,6 +162,7 @@ export async function approveReportAction(formData: FormData) {
         closedAt: closedAtIso,
         employeeEmail,
         pagadorEmails,
+        pagadorEmailList: payerEmailArray,
         // Compatibilidad con flujos n8n antiguos
         targetEmails,
         excelBase64,
