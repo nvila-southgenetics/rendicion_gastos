@@ -194,11 +194,11 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
           <p className="font-semibold">
             {isReviewing
               ? "Este gasto está en revisión"
-              : "Este gasto fue rechazado por tu supervisor"}
+              : "Este gasto fue rechazado por tu aprobador"}
           </p>
           {expense.supervisor_comment && (
             <p>
-              Comentario del supervisor:{" "}
+              Comentario del aprobador:{" "}
               <span className="font-medium">{expense.supervisor_comment}</span>
             </p>
           )}

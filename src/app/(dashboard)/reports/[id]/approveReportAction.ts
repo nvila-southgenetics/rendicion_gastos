@@ -2,6 +2,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateExcelExport } from "@/lib/excelGenerator";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 
 export async function approveReportAction(formData: FormData) {
   "use server";
@@ -76,13 +78,37 @@ export async function approveReportAction(formData: FormData) {
     throw new Error("No se pudo aprobar la rendición.");
   }
 
-  const webhookUrl = process.env.N8N_WEBHOOK_URL_RENDICION_APROBADA;
+  const webhookUrl =
+    process.env.N8N_WEBHOOK_URL_APROBAR_CIERRE ??
+    process.env.N8N_WEBHOOK_URL_RENDICION_APROBADA;
   if (webhookUrl) {
     // Obtener todos los usuarios con rol "pagador"
     const { data: payers, error: payersError } = await supabase
       .from("profiles")
       .select("email")
       .eq("role", "pagador");
+
+    let effectivePayers = payers ?? [];
+    // Si por RLS no devolvi? filas, intentar fallback con service role (si est? configurado).
+    if (effectivePayers.length === 0) {
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (serviceRoleKey && supabaseUrl) {
+        const adminClient = createClient<Database>(supabaseUrl, serviceRoleKey);
+        const { data: adminPayers, error: adminPayersError } = await adminClient
+          .from("profiles")
+          .select("email")
+          .eq("role", "pagador");
+        if (adminPayersError) {
+          console.error(
+            "Fallback service role: no se pudieron obtener pagadores para aprobaci?n:",
+            adminPayersError,
+          );
+        } else {
+          effectivePayers = adminPayers ?? [];
+        }
+      }
+    }
 
     if (payersError) {
       console.error(
@@ -91,7 +117,7 @@ export async function approveReportAction(formData: FormData) {
       );
     } else {
       const payerEmailArray =
-        (payers ?? [])
+        (effectivePayers ?? [])
           .map((p) => p.email)
           .filter((e): e is string => typeof e === "string" && e.trim().length > 0) ?? [];
 
