@@ -136,22 +136,32 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
             value={new Date(e.expense_date + "T12:00:00").toLocaleDateString("es-UY")}
           />
           <Row label="Categoría" value={CATEGORY_LABELS[e.category] ?? e.category} />
+          {e.supervisor_comment && (
+            <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5">
+              <p className="text-xs font-semibold text-amber-600 mb-1">
+                Motivo del aprobador
+              </p>
+              <p className="text-sm text-amber-700">{e.supervisor_comment}</p>
+            </div>
+          )}
           {e.rejection_reason && (
             <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5">
               <p className="text-xs font-semibold text-red-600 mb-1">Motivo de rechazo</p>
               <p className="text-sm text-red-700">{e.rejection_reason}</p>
             </div>
           )}
+          {e.employee_response && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2.5">
+              <p className="text-xs font-semibold text-emerald-600 mb-1">
+                Respuesta del rendidor (reenvío)
+              </p>
+              <p className="text-sm text-emerald-700">{e.employee_response}</p>
+            </div>
+          )}
           {e.admin_notes && e.status === "reviewing" && (
             <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
               <p className="text-xs font-semibold text-blue-600 mb-1">Comentario del administrador</p>
               <p className="text-sm text-blue-700">{e.admin_notes}</p>
-            </div>
-          )}
-          {e.employee_response && (
-            <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2.5">
-              <p className="text-xs font-semibold text-emerald-600 mb-1">Respuesta del rendidor</p>
-              <p className="text-sm text-emerald-700">{e.employee_response}</p>
             </div>
           )}
         </div>
