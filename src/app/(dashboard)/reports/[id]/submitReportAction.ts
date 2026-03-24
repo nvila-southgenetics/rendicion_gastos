@@ -54,7 +54,7 @@ export async function submitReportAction(formData: FormData) {
     ? process.env.N8N_WEBHOOK_URL_RENDICION_CORREGIDA
     : process.env.N8N_WEBHOOK_URL_NUEVA_RENDICION;
   if (webhookUrl) {
-    const [{ data: employee }, { data: assignments }] = await Promise.all([
+    const [{ data: employee }, { data: assignments }, { data: reportExpenses }] = await Promise.all([
       supabase
         .from("profiles")
         .select("full_name, email")
@@ -66,12 +66,25 @@ export async function submitReportAction(formData: FormData) {
           "supervisor_id, profiles!supervision_assignments_supervisor_id_fkey(email)",
         )
         .eq("employee_id", session!.user.id),
+      supabase
+        .from("expenses")
+        .select("merchant_name")
+        .eq("report_id", reportId),
     ]);
 
     const supervisorEmails = (assignments ?? [])
       .map((a) => (a.profiles as { email: string | null } | null)?.email)
       .filter((e): e is string => !!e)
       .join(",");
+
+    const merchantList = Array.from(
+      new Set(
+        (reportExpenses ?? [])
+          .map((expense) => expense.merchant_name?.trim() ?? "")
+          .filter((merchant) => merchant.length > 0),
+      ),
+    );
+    const primaryMerchant = merchantList[0] ?? "";
 
     let excelBase64 = "";
     let excelName = `Rendicion_${reportId.slice(0, 6)}.xlsx`;
@@ -89,6 +102,10 @@ export async function submitReportAction(formData: FormData) {
       employeeName: employee?.full_name ?? "",
       employeeEmail: employee?.email ?? "",
       supervisorEmails,
+      comercio: primaryMerchant,
+      empresa: primaryMerchant,
+      merchant: primaryMerchant,
+      merchantList,
       previousWorkflowStatus,
       isResubmission,
       // Compatibilidad con flujos n8n antiguos
