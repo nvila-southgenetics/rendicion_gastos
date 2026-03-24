@@ -80,6 +80,12 @@ el backend incluye:
 - `excelBase64`
 - `excelName`
 
+Además, en aprobación de cierre se envían campos de contexto para n8n:
+- `closingDate` (`YYYY-MM-DD`)
+- `closedAt` (ISO timestamp)
+- `pagadorEmails` (CSV)
+- `pagadorEmailList` (array limpio y deduplicado)
+
 ---
 ## Integración contable Odoo (sync)
 
@@ -90,12 +96,63 @@ Se agregó:
   - Implementación: `src/app/api/reports/[id]/odoo-sync/route.ts`
   - Requiere `SUPABASE_SERVICE_ROLE_KEY` en entorno.
 
+En el webhook de pago también se envía:
+- `odooMoveId` (si existe en la rendición)
+
 ---
 ## Webhook factura (OCR/lectura ticket)
 
 Webhook `https://n8n.srv908725.hstgr.cloud/webhook/factura` se dispara al crear un **nuevo gasto**:
 - Utilidad: `src/lib/n8n/sendExpenseWebhook.ts`
 - Disparo: `src/components/expenses/NewExpenseForm.tsx` (luego del INSERT exitoso)
+
+---
+## Actualizaciones recientes (marzo 2026)
+
+1. **Sincronización de UI post-mutations**
+   - Se reforzó refresco de datos en componentes cliente con `router.refresh()` tras cambios exitosos (roles, asignaciones, etc.).
+   - Se agregó refresco en tiempo real para cambios de `weekly_reports`:
+     - `src/components/realtime/WeeklyReportsRealtimeRefresher.tsx`
+     - montado en `src/app/(dashboard)/layout.tsx`
+
+2. **Flujo de edición/reenvío de gastos en revisión**
+   - En `EditExpenseForm`, al reenviar (`canResubmit`) redirige a la rendición (`/dashboard/reports/{reportId}`).
+   - Campo `employee_response` pasó a obligatorio en reenvío, con UI:
+     - `(*)` en label
+     - leyenda “Los campos con (*) son obligatorios”
+
+3. **Visibilidad de comentarios ida/vuelta aprobador-rendidor**
+   - En detalle de gasto del aprobador se muestra respuesta del rendidor:
+     - `employee_response`
+   - Se eliminó duplicado visual de “Motivo del aprobador” cuando ya existe “Motivo de rechazo”.
+   - Ajustes en:
+     - `src/app/(dashboard)/expenses/[id]/page.tsx`
+     - `src/app/(dashboard)/aprobador/reports/[id]/page.tsx`
+
+4. **Pago de rendición (employee view)**
+   - En la vista del rendidor `reports/[id]` se agregó bloque de “Información de pago” cuando `workflow_status = paid`, incluyendo:
+     - fecha, monto, destino y link de comprobante (o aviso si falta URL).
+
+5. **Moneda de presupuesto por rendición**
+   - Se agregó `weekly_reports.budget_currency` (default `USD`):
+     - migración `supabase/migrations/20260320_add_budget_currency_to_weekly_reports.sql`
+   - La rendición ahora permite elegir moneda de presupuesto al crear.
+   - Cálculos de total/presupuesto se convierten a moneda de presupuesto (no se suman monedas “en bruto”).
+   - Archivos clave:
+     - `src/lib/currency.ts` (`convertAmount`, `totalInCurrency`)
+     - `src/components/reports/NewReportForm.tsx`
+     - `src/components/reports/RealtimeBudgetSection.tsx`
+     - `src/app/(dashboard)/reports/[id]/page.tsx`
+     - `src/app/(dashboard)/aprobador/reports/[id]/page.tsx`
+     - `src/app/(dashboard)/viewer/reports/[id]/page.tsx`
+
+6. **Excel de rendición**
+   - Se corrigió export para incluir `merchant_name` (Comercio/Empresa) en filas.
+   - Se ajustó total consolidado a moneda de presupuesto.
+   - Se mantiene subtotal por moneda original para trazabilidad.
+   - Archivos:
+     - `src/lib/excelGenerator.ts`
+     - `src/lib/excel/generateReport.ts`
 
 ---
 ## Arquitectura técnica (alto nivel)
