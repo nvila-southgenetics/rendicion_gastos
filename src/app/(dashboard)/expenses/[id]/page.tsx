@@ -8,6 +8,10 @@ import type { Tables, TablesUpdate } from "@/types/database";
 
 type Expense = Tables<"expenses">;
 
+function isPdfUrl(url: string): boolean {
+  return /\.pdf($|[?#])/i.test(url);
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   transport:       "Transporte",
   food:            "Comida y bebida",
@@ -174,11 +178,23 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
               return <p className="text-xs text-[var(--color-text-muted)]">No hay comprobante adjunto.</p>;
             }
             if (urls.length === 1) {
+              const singleUrl = urls[0];
+              const singleIsPdf = isPdfUrl(singleUrl);
               return (
-                <a href={urls[0]} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={urls[0]} alt="Comprobante" className="w-full rounded-xl border border-[#e5e2ea] object-cover max-h-64" />
-                  <span className="mt-1.5 block text-xs text-[var(--color-primary)] underline underline-offset-2">Ver imagen completa ↗</span>
+                <a href={singleUrl} target="_blank" rel="noreferrer">
+                  {singleIsPdf ? (
+                    <div className="flex min-h-40 w-full items-center justify-center rounded-xl border border-[#e5e2ea] bg-[#f5f1f8] text-sm font-medium text-[var(--color-text-muted)]">
+                      PDF adjunto
+                    </div>
+                  ) : (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={singleUrl} alt="Comprobante" className="w-full rounded-xl border border-[#e5e2ea] object-cover max-h-64" />
+                    </>
+                  )}
+                  <span className="mt-1.5 block text-xs text-[var(--color-primary)] underline underline-offset-2">
+                    {singleIsPdf ? "Ver PDF ↗" : "Ver imagen completa ↗"}
+                  </span>
                 </a>
               );
             }
@@ -186,8 +202,16 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
               <div className="grid grid-cols-2 gap-2">
                 {urls.map((url, i) => (
                   <a key={url} href={url} target="_blank" rel="noreferrer" className="group relative block overflow-hidden rounded-xl border border-[#e5e2ea] bg-black/5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt={`Comprobante ${i + 1}`} className="aspect-square w-full object-cover transition-opacity group-hover:opacity-90" />
+                    {isPdfUrl(url) ? (
+                      <div className="flex aspect-square w-full items-center justify-center bg-[#f5f1f8] text-xs font-medium text-[var(--color-text-muted)]">
+                        PDF
+                      </div>
+                    ) : (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Comprobante ${i + 1}`} className="aspect-square w-full object-cover transition-opacity group-hover:opacity-90" />
+                      </>
+                    )}
                     <span className="absolute bottom-1 right-1 rounded-full bg-black/50 px-1.5 py-0.5 text-[0.6rem] text-white">
                       {i + 1} ↗
                     </span>

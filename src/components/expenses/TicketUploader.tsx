@@ -63,7 +63,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
     }
 
     const uid      = session.user.id;
-    const ext      = file.name.split(".").pop() ?? "jpg";
+    const ext      = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const path     = `${uid}/${fileName}`;
     const tempId   = fileName;
@@ -72,11 +72,15 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
 
     const { error: uploadError } = await supabase.storage
       .from("comprobantes")
-      .upload(path, file, { upsert: false });
+      .upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
 
     if (uploadError) {
       setProgress((p) => ({ ...p, [tempId]: "error" }));
-      toast.error(`Error subiendo "${file.name}".`);
+      const message = uploadError.message || uploadError.name || "Error desconocido";
+      toast.error(`Error subiendo "${file.name}": ${message}`);
       setTimeout(() => setProgress((p) => { const n = { ...p }; delete n[tempId]; return n; }), 3000);
       return;
     }
