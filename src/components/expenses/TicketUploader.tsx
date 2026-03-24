@@ -9,6 +9,7 @@ export interface UploadedFile {
   publicUrl:   string;
   previewUrl:  string;  // object URL for local preview
   name:        string;
+  mimeType:    string;
 }
 
 interface TicketUploaderProps {
@@ -33,6 +34,10 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
 
   const [dragging, setDragging] = useState(false);
 
+  const isPdfFile = (file: File) => file.type === "application/pdf";
+  const isImageFile = (file: File) => file.type.startsWith("image/");
+  const isPdfUrl = (url: string) => /\.pdf($|[?#])/i.test(url);
+
   // Notifica al padre DESPUÉS del render para evitar setState-durante-render
   const onUploadsChangedRef = useRef(onUploadsChanged);
   onUploadsChangedRef.current = onUploadsChanged;
@@ -42,8 +47,8 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
   }, [uploaded]);
 
   async function uploadFile(file: File) {
-    if (!file.type.startsWith("image/")) {
-      toast.error(`"${file.name}": solo se permiten fotos (imágenes).`);
+    if (!isImageFile(file) && !isPdfFile(file)) {
+      toast.error(`"${file.name}": solo se permiten imágenes o PDF.`);
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -87,6 +92,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
       publicUrl,
       previewUrl:  URL.createObjectURL(file),
       name:        file.name,
+      mimeType:    file.type,
     };
 
     setUploaded((prev) => [...prev, entry]);
@@ -128,8 +134,17 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
           {/* Imágenes existentes (modo edición) */}
           {existing.map((url) => (
             <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border border-[#e5e2ea] bg-black/5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="Comprobante" className="h-full w-full object-cover" />
+              {isPdfUrl(url) ? (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#f5f1f8] text-center">
+                  <span className="text-2xl">PDF</span>
+                  <span className="px-2 text-[0.65rem] text-[var(--color-text-muted)]">Comprobante PDF</span>
+                </div>
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="Comprobante" className="h-full w-full object-cover" />
+                </>
+              )}
               <a
                 href={url}
                 target="_blank"
@@ -150,8 +165,17 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
           {/* Archivos recién subidos */}
           {uploaded.map((f, i) => (
             <div key={f.storagePath} className="group relative aspect-square overflow-hidden rounded-xl border border-[#e5e2ea] bg-black/5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={f.previewUrl} alt={f.name} className="h-full w-full object-cover" />
+              {f.mimeType === "application/pdf" ? (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#f5f1f8] text-center">
+                  <span className="text-2xl">PDF</span>
+                  <span className="px-2 text-[0.65rem] text-[var(--color-text-muted)]">{f.name}</span>
+                </div>
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={f.previewUrl} alt={f.name} className="h-full w-full object-cover" />
+                </>
+              )}
               <a
                 href={f.publicUrl}
                 target="_blank"
@@ -203,10 +227,10 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
       >
         <div>
           <p className="text-sm font-medium text-[var(--color-text-primary)]">
-            {hasFiles ? "Foto de comprobante cargada" : "Arrastrá una foto de comprobante aquí"}
+            {hasFiles ? "Comprobante cargado" : "Arrastrá el comprobante aquí"}
           </p>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-            Solo fotos (JPG, PNG, WEBP) · máx. 10 MB por foto · podés tomar una foto o elegir desde la galería
+            Imágenes (JPG, PNG, WEBP) o PDF · máx. 10 MB por archivo
           </p>
         </div>
 
@@ -218,7 +242,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
           <input
             ref={inputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,application/pdf"
             className="hidden"
             onChange={(e) => handleFilesSelected(e.target.files)}
             disabled={uploadingCount > 0 || reachedLimit}
@@ -227,7 +251,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
             ? `Subiendo comprobante…`
             : hasFiles
             ? "Reemplazar comprobante"
-            : "Seleccionar foto"}
+            : "Seleccionar archivo"}
         </label>
       </div>
     </div>
