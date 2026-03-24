@@ -36,6 +36,28 @@ export function CloseReportButton({ reportId, currentStatus }: ReportStatusButto
 
     const userId = session.user.id;
 
+    // Regla de negocio: no se puede cerrar una rendición sin gastos.
+    if (isOpen) {
+      const { count, error: countError } = await supabase
+        .from("expenses")
+        .select("id", { count: "exact", head: true })
+        .eq("report_id", reportId);
+
+      if (countError) {
+        setLoading(false);
+        setConfirming(false);
+        toast.error("No se pudo validar los gastos de la rendición.");
+        return;
+      }
+
+      if (!count || count <= 0) {
+        setLoading(false);
+        setConfirming(false);
+        toast.error("Para cerrar la rendición, debés cargar al menos un gasto.");
+        return;
+      }
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, full_name, email, role")
