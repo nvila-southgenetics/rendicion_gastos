@@ -122,9 +122,9 @@ export default async function AdminUsersPage({
     assignmentsByViewer[a.viewer_id].push({ id: a.id, employee_id: a.employee_id, employee: emp });
   }
 
-  // Available users for supervision assignment (non-admin)
+  // Available users for supervision assignment.
+  // Admins can also be supervised for expense-report approval workflow.
   const availableForSupervision = userList
-    .filter((u) => u.role !== "admin")
     .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email, role: u.role }));
 
   const supervisors = userList.filter((u) => u.role === "aprobador" || u.role === "supervisor");

@@ -42,7 +42,8 @@ export function CloseReportButton({ reportId, currentStatus }: ReportStatusButto
       .eq("id", userId)
       .single();
 
-    const isEmpleado = profile?.role === "employee";
+    const shouldNotifyAsSubmitter =
+      profile?.role === "employee" || profile?.role === "admin";
 
     const updates = isOpen
       ? { status: "closed" as const, closed_at: new Date().toISOString() }
@@ -61,8 +62,8 @@ export function CloseReportButton({ reportId, currentStatus }: ReportStatusButto
       return;
     }
 
-    // Si un empleado acaba de cerrar la rendición, avisar a N8N (incluyendo Excel)
-    if (isOpen && isEmpleado && profile) {
+    // Si quien cierra actúa como rendidor (empleado o admin), avisar a N8N (incluyendo Excel)
+    if (isOpen && shouldNotifyAsSubmitter && profile) {
       try {
         const [{ data: supervisorRows }, excelRes] = await Promise.all([
           supabase

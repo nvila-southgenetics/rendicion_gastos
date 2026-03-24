@@ -22,9 +22,18 @@ interface Props {
   supervisorId:        string;
   supervisorName:      string;
   initialAssignments:  Assignment[];
-  /** All users that can be assigned (non-admin, not the supervisor themselves) */
+  /** All users that can be assigned (except the supervisor themselves) */
   availableEmployees:  UserOption[];
 }
+
+const ROLE_LABELS: Record<string, string> = {
+  employee: "Empleado",
+  seller: "Vendedor",
+  aprobador: "Aprobador",
+  admin: "Administrador",
+  chusmas: "Chusma",
+  pagador: "Pagador",
+};
 
 export function SupervisionAssigner({
   supervisorId,
@@ -87,7 +96,9 @@ export function SupervisionAssigner({
               className="flex items-center gap-1.5 rounded-full bg-purple-50 border border-purple-200 pl-2.5 pr-1.5 py-1 text-xs text-purple-800"
             >
               <span className="font-medium">{a.employee.full_name}</span>
-              <span className="text-purple-400 text-[0.65rem]">({a.employee.role === "aprobador" ? "Aprobador" : "Empleado"})</span>
+              <span className="text-purple-400 text-[0.65rem]">
+                ({ROLE_LABELS[a.employee.role] ?? a.employee.role})
+              </span>
               <button
                 onClick={() => removeEmployee(a.id, a.employee.full_name)}
                 disabled={saving}
