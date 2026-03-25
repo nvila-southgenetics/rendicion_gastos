@@ -8,6 +8,7 @@ const ROLE_LABELS: Record<string, string> = {
   seller:     "Vendedor",
   aprobador:  "Aprobador",
   chusmas:    "Chusmas",
+  admin:      "Administrador",
 };
 
 export default async function ViewerHomePage() {
@@ -40,7 +41,7 @@ export default async function ViewerHomePage() {
     const { data: employees } = await supabase
       .from("profiles")
       .select("id, full_name, email, role, department")
-      .in("role", ["employee", "seller", "aprobador", "chusmas"]);
+      .in("role", ["employee", "seller", "aprobador", "chusmas", "admin"]);
     employeesResult = (employees ?? []) as any;
     employeeIds = (employeesResult ?? []).map((e) => e.id);
   } else {
