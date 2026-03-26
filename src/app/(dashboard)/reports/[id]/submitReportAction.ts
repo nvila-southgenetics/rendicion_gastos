@@ -31,6 +31,20 @@ export async function submitReportAction(formData: FormData) {
     throw new Error("No se encontró la rendición o no tenés permisos.");
   }
 
+  // Regla de negocio: no se puede enviar/cerrar una rendición sin gastos.
+  const { count: expenseCount, error: countError } = await supabase
+    .from("expenses")
+    .select("id", { count: "exact", head: true })
+    .eq("report_id", reportId);
+
+  if (countError) {
+    throw new Error("No se pudo validar los gastos de la rendición.");
+  }
+
+  if (!expenseCount || expenseCount <= 0) {
+    throw new Error("Para cerrar/enviar la rendición, debés cargar al menos un gasto.");
+  }
+
   // Cambiar estado del workflow a submitted
   const { error: updateError } = await supabase
     .from("weekly_reports")
