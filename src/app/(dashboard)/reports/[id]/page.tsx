@@ -317,10 +317,9 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                       </div>
                     </Link>
                     {expense.status === "rejected" && expense.rejection_reason && (
-                      <div className="mx-4 mb-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-                        <p className="text-[0.65rem] font-semibold text-red-600 mb-0.5">Motivo de rechazo</p>
-                        <p className="text-xs text-red-700">{expense.rejection_reason}</p>
-                      </div>
+                      <p className="mx-4 mb-2 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                        Motivo de rechazo: {expense.rejection_reason}
+                      </p>
                     )}
                     {expense.status === "reviewing" && expense.admin_notes && (
                       <div className="mx-4 mb-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
@@ -375,8 +374,8 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                           {new Date(expense.expense_date + "T12:00:00").toLocaleDateString("es-UY")}
                         </p>
                         {expense.status === "rejected" && expense.rejection_reason && (
-                          <p className="mt-1 text-[0.68rem] text-red-600 italic">
-                            ✕ {expense.rejection_reason}
+                          <p className="mt-1 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                            Motivo de rechazo: {expense.rejection_reason}
                           </p>
                         )}
                         {expense.status === "reviewing" && expense.admin_notes && (

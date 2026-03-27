@@ -51,14 +51,12 @@ export default async function DashboardPage() {
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
   return (
-    <div className="space-y-5">
-      {/* Saludo */}
-      <div>
-        <h1 className="page-title">Hola, {firstName} 👋</h1>
+    <div className="w-full max-w-full space-y-4 overflow-x-hidden box-border">
+      <div className="min-w-0">
+        <h1 className="page-title truncate">Hola, {firstName} 👋</h1>
         <p className="page-subtitle">Resumen de tus gastos recientes.</p>
       </div>
 
-      {/* Rendición abierta activa */}
       {openReport ? (
         <OpenReportCard
           reportId={openReport.id}
@@ -68,44 +66,54 @@ export default async function DashboardPage() {
           weekEnd={openReport.week_end}
         />
       ) : (
-        <div className="card flex items-center justify-between gap-4 p-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+        <div className="card flex w-full max-w-full flex-col gap-3 p-4 max-[430px]:p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 max-w-full">
+            <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
               No tenés rendiciones abiertas
             </p>
             <p className="text-xs text-[var(--color-text-muted)]">
               Creá una para empezar a cargar gastos.
             </p>
           </div>
-          <Link href="/dashboard/reports/new" className="btn-primary text-xs py-2 px-4 shrink-0">
+          <Link
+            href="/dashboard/reports/new"
+            className="btn-primary w-full shrink-0 text-center text-xs py-2 px-4 sm:w-auto"
+          >
             Crear
           </Link>
         </div>
       )}
 
-      {/* Accesos rápidos */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid w-full max-w-full grid-cols-2 gap-2">
         <Link
           href="/dashboard/reports"
-          className="card flex flex-col items-center gap-2 p-4 text-center active:scale-[0.97] transition-transform"
+          className="card flex min-w-0 flex-col items-center gap-1.5 px-2 py-3 text-center active:scale-[0.97] transition-transform"
         >
-          <span className="text-2xl">📋</span>
-          <span className="text-xs font-semibold text-[var(--color-text-primary)]">Rendiciones</span>
+          <span className="text-xl">📋</span>
+          <span className="max-w-full truncate text-xs font-semibold text-[var(--color-text-primary)]">
+            Rendiciones
+          </span>
         </Link>
         <Link
           href="/dashboard/expenses"
-          className="card flex flex-col items-center gap-2 p-4 text-center active:scale-[0.97] transition-transform"
+          className="card flex min-w-0 flex-col items-center gap-1.5 px-2 py-3 text-center active:scale-[0.97] transition-transform"
         >
-          <span className="text-2xl">🧾</span>
-          <span className="text-xs font-semibold text-[var(--color-text-primary)]">Histórico</span>
+          <span className="text-xl">🧾</span>
+          <span className="max-w-full truncate text-xs font-semibold text-[var(--color-text-primary)]">
+            Histórico
+          </span>
         </Link>
       </div>
 
-      {/* Últimos gastos */}
-      <div className="card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#f0ecf4] px-4 py-3">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Últimos gastos</h2>
-          <Link href="/dashboard/expenses" className="text-xs font-medium text-[var(--color-primary)]">
+      <div className="card w-full max-w-full overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-[#f0ecf4] px-4 py-3 max-[430px]:px-3">
+          <h2 className="min-w-0 truncate text-sm font-semibold text-[var(--color-text-primary)]">
+            Últimos gastos
+          </h2>
+          <Link
+            href="/dashboard/expenses"
+            className="shrink-0 whitespace-nowrap text-xs font-medium text-[var(--color-primary)]"
+          >
             Ver todos
           </Link>
         </div>
@@ -115,26 +123,28 @@ export default async function DashboardPage() {
               <Link
                 key={expense.id}
                 href={`/dashboard/expenses/${expense.id}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#faf7fd] active:bg-[#f0ecf4] transition-colors"
+                className="flex w-full min-w-0 items-center justify-between gap-2 px-4 py-3 transition-colors hover:bg-[#faf7fd] active:bg-[#f0ecf4] max-[430px]:px-3"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-[var(--color-text-primary)] max-[430px]:text-xs">
                     {expense.description}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)]">
+                  <p className="truncate text-xs text-[var(--color-text-muted)] max-[430px]:text-[0.65rem]">
                     {CATEGORY_LABELS[expense.category] ?? expense.category}
                     {" · "}
                     {new Date(expense.expense_date + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="text-sm font-semibold">
-                    {Number(expense.amount).toLocaleString("es-UY", { minimumFractionDigits: 2 })}{" "}
-                    <span className="text-xs font-normal text-[var(--color-text-muted)]">
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
+                  <span className="whitespace-nowrap text-sm font-semibold max-[430px]:text-xs">
+                    {Number(expense.amount).toLocaleString("es-UY", { minimumFractionDigits: 2 })}
+                    <span className="ml-0.5 text-xs font-normal text-[var(--color-text-muted)] max-[540px]:hidden">
                       {expense.currency ?? "UYU"}
                     </span>
                   </span>
-                  <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                  <div className="max-[540px]:hidden">
+                    <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                  </div>
                 </div>
               </Link>
             ))}
