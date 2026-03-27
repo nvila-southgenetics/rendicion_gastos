@@ -42,8 +42,14 @@ export function MobileNav({
     router.push("/");
   }
 
+  const useScrollableLayout = navItems.length + 1 > 5; // + botón "Salir"
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-[#e5e2ea] bg-white/95 px-2 py-2.5 md:hidden">
+    <nav
+      className={`fixed inset-x-0 bottom-0 z-30 flex border-t border-[#e5e2ea] bg-white/95 px-2 py-2.5 lg:hidden ${
+        useScrollableLayout ? "overflow-x-auto" : "justify-between"
+      }`}
+    >
       {navItems.map((item) => {
         const Icon = item.icon;
         const isRootDashboard = item.href === "/dashboard";
@@ -55,6 +61,8 @@ export function MobileNav({
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center text-xs ${
+              useScrollableLayout ? "min-w-[68px]" : "min-w-0 flex-1"
+            } ${
               active ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"
             }`}
           >
@@ -65,14 +73,16 @@ export function MobileNav({
             >
               <Icon className="h-4 w-4" />
             </span>
-            <span>{item.label}</span>
+            <span className="max-w-full truncate">{item.label}</span>
           </Link>
         );
       })}
 
       <button
         onClick={handleSignOut}
-        className="flex flex-col items-center text-xs text-[var(--color-text-muted)]"
+        className={`flex flex-col items-center text-xs text-[var(--color-text-muted)] ${
+          useScrollableLayout ? "min-w-[68px]" : "min-w-0 flex-1"
+        }`}
       >
         <span className="mb-1 flex h-8 w-8 items-center justify-center rounded-full">
           <LogOut className="h-4 w-4" />

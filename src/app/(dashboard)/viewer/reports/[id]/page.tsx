@@ -95,7 +95,7 @@ export default async function ViewerReportDetailPage({ params }: Props) {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href={
             isPagador
@@ -218,7 +218,7 @@ export default async function ViewerReportDetailPage({ params }: Props) {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Pendientes", value: pendingCount, color: "text-amber-600" },
           { label: "En revisión", value: reviewingCount, color: "text-blue-600" },

@@ -84,7 +84,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Accesos rápidos */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link
           href="/dashboard/reports"
           className="card flex flex-col items-center gap-2 p-4 text-center active:scale-[0.97] transition-transform"

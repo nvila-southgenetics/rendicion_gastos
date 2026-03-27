@@ -1,8 +1,8 @@
 export function Header() {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#e5e2ea] bg-white/90 px-4 py-3 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#e5e2ea] bg-white/90 px-4 py-3 backdrop-blur-md lg:px-6">
       {/* Logo visible solo en mobile (el sidebar está oculto) */}
-      <div className="flex items-center gap-2 md:hidden">
+      <div className="flex items-center gap-2 lg:hidden">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white text-sm font-bold">
           R
         </div>
@@ -11,7 +11,7 @@ export function Header() {
         </span>
       </div>
       {/* Espacio en desktop (el título lo pone cada página) */}
-      <div className="hidden md:block" />
+      <div className="hidden lg:block" />
     </header>
   );
 }

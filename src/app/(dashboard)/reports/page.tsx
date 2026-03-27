@@ -81,12 +81,12 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="page-title">Rendiciones</h1>
           <p className="page-subtitle">Administrá tus períodos de gastos.</p>
         </div>
-        <Link href="/dashboard/reports/new" className="btn-primary text-sm">
+        <Link href="/dashboard/reports/new" className="btn-primary w-full text-center text-sm sm:w-auto">
           + Nueva rendición
         </Link>
       </div>
@@ -101,7 +101,7 @@ export default async function ReportsPage() {
               <Link
                 key={report.id}
                 href={`/dashboard/reports/${report.id}`}
-                className="card flex items-center justify-between gap-4 p-4 hover:shadow-md transition-shadow"
+                className="card flex w-full flex-col gap-3 p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-lg">
@@ -117,7 +117,7 @@ export default async function ReportsPage() {
                         </>
                       )}
                     </p>
-                    <p className="text-xs text-[var(--color-text-muted)]">
+                    <p className="text-xs text-[var(--color-text-muted)] break-words whitespace-normal">
                       {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
                       {" – "}
                       {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
@@ -136,7 +136,7 @@ export default async function ReportsPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:shrink-0 sm:justify-start">
                   <ReportStatusBadge
                     workflowStatus={report.workflow_status}
                     status={report.status}

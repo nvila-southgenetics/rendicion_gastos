@@ -47,7 +47,7 @@ export default async function AdminHomePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="card p-5 text-center">
             <p className="text-[0.7rem] font-semibold uppercase text-[var(--color-text-muted)]">

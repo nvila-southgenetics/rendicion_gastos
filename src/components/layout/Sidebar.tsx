@@ -43,7 +43,7 @@ export function Sidebar({
   }
 
   return (
-    <aside className="hidden md:flex md:w-64 flex-col bg-[var(--color-primary)] text-[var(--color-text-on-primary)] px-5 py-6">
+    <aside className="hidden lg:flex lg:w-64 flex-col bg-[var(--color-primary)] text-[var(--color-text-on-primary)] px-5 py-6">
       <div className="mb-8">
         <div className="text-lg font-semibold tracking-tight">Rendición SG</div>
         <div className="text-xs text-white/70 mt-1">Control de gastos</div>

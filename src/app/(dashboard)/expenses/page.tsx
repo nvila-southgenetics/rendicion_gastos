@@ -37,38 +37,40 @@ export default async function ExpensesPage() {
       {expenses && expenses.length > 0 ? (
         <>
           {/* Cards — mobile */}
-          <div className="space-y-2 md:hidden">
+          <div className="space-y-2 lg:hidden">
             {(expenses as Expense[]).map((expense) => (
               <Link
                 key={expense.id}
                 href={`/dashboard/expenses/${expense.id}`}
-                className="card flex items-center justify-between gap-3 p-4 active:scale-[0.98] transition-transform"
+                className="card block w-full p-4 active:scale-[0.98] transition-transform"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                <div className="min-w-0">
+                  <p className="text-base font-semibold leading-snug break-words whitespace-normal text-[var(--color-text-primary)]">
                     {expense.description}
                   </p>
-                  <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                     {CATEGORY_LABELS[expense.category] ?? expense.category}
                     {" · "}
                     {new Date(expense.expense_date + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold text-[var(--color-text-primary)] whitespace-nowrap">
                     {Number(expense.amount).toLocaleString("es-UY", { minimumFractionDigits: 2 })}{" "}
                     <span className="text-xs font-normal text-[var(--color-text-muted)]">
                       {expense.currency ?? "UYU"}
                     </span>
                   </span>
-                  <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                  <div className="shrink-0">
+                    <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
 
           {/* Tabla — desktop */}
-          <div className="card hidden overflow-hidden md:block">
+          <div className="card hidden overflow-hidden lg:block">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-[#f5f1f8] text-xs uppercase text-[var(--color-text-muted)]">
                 <tr>
