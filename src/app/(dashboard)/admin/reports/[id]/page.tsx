@@ -91,14 +91,19 @@ export default async function AdminReportDetailPage({ params }: Props) {
   const budgetOverrun = budgetMax && totalUSD !== null ? totalUSD > budgetMax : false;
 
   return (
-    <div className="space-y-5">
+    <div className="w-full max-w-full space-y-5">
       {/* Encabezado */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link href="/dashboard/admin/reports" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-            ← Todas las rendiciones
-          </Link>
-          <h1 className="page-title mt-1">
+      <div className="space-y-3">
+        <Link
+          href="/dashboard/admin/reports"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+        >
+          <span>←</span>
+          <span>Volver</span>
+        </Link>
+
+        <div className="min-w-0">
+          <h1 className="page-title">
             {report.title ?? (
               <>
                 {new Date(report.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "long" })}
@@ -107,23 +112,24 @@ export default async function AdminReportDetailPage({ params }: Props) {
               </>
             )}
           </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
             {new Date(report.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
             {" – "}
             {new Date(report.week_end + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
           </p>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+          <p className="mt-0.5 break-words text-sm text-[var(--color-text-muted)]">
             <span className="font-semibold text-[var(--color-text-primary)]">{user?.full_name ?? "—"}</span>
             {" · "}{user?.email}
             {user?.department && ` · ${user.department}`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
+
+        <div className="flex flex-wrap items-center gap-2">
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
               isOpen
                 ? "bg-emerald-100 text-emerald-700"
-                : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+                : "bg-purple-100 text-[var(--color-primary)]"
             }`}
           >
             {isOpen ? "Abierta" : "Cerrada"}
@@ -157,23 +163,23 @@ export default async function AdminReportDetailPage({ params }: Props) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {[
           { label: "Pendientes",   value: pendingCount,   color: "text-amber-600" },
           { label: "En revisión",  value: reviewingCount, color: "text-blue-600" },
           { label: "Aprobados",    value: approvedCount,  color: "text-emerald-600" },
           { label: "Rechazados",   value: rejectedCount,  color: "text-red-600" },
         ].map((s) => (
-          <div key={s.label} className="card p-4 text-center">
-            <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">{s.label}</p>
-            <p className={`mt-1 text-2xl font-bold ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="card p-3 text-center sm:p-4">
+            <p className="text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)] sm:text-[0.65rem]">{s.label}</p>
+            <p className={`mt-1 text-xl font-bold sm:text-2xl ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Total rendición con desglose */}
       {expenseList.length > 0 && (
-        <div className="card p-4 space-y-3">
+        <div className="card w-full space-y-3 p-3 sm:p-4">
           <CurrencyBreakdown
             totalsByCurrency={totalsByCurrency}
             totalUSD={totalUSD}
@@ -213,8 +219,8 @@ export default async function AdminReportDetailPage({ params }: Props) {
       )}
 
       {/* Gastos */}
-      <div className="card overflow-hidden">
-        <div className="border-b border-[#f0ecf4] px-4 py-3">
+      <div className="card w-full overflow-hidden">
+        <div className="border-b border-[#f0ecf4] px-4 py-3 max-[430px]:px-3">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Gastos ({expenseList.length})
           </h2>
@@ -226,11 +232,11 @@ export default async function AdminReportDetailPage({ params }: Props) {
               const usdAmount = toUSD(Number(expense.amount), expense.currency ?? "UYU", effectiveRates);
               const isOriginalUSD = (expense.currency ?? "UYU") === "USD";
               return (
-                <div key={expense.id} className="p-4 hover:bg-[#fdfbff] transition-colors">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                <div key={expense.id} className="w-full px-4 py-3 transition-colors hover:bg-[#fdfbff] max-[430px]:px-3">
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="break-words text-sm font-semibold text-[var(--color-text-primary)]">
                           {expense.description}
                         </span>
                         <ExpenseStatusBadge status={expense.status ?? "pending"} />
@@ -240,18 +246,17 @@ export default async function AdminReportDetailPage({ params }: Props) {
                         <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
                       </div>
 
-                      {/* Monto original + USD */}
                       <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
                         <span className="text-sm font-bold text-[var(--color-text-primary)]">
                           {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
                         </span>
                         {!isOriginalUSD && (
                           usdAmount !== null ? (
-                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                               ≈ USD {fmt(usdAmount)}
                             </span>
                           ) : ratesComplete === false && (
-                            <span className="text-[0.65rem] text-[var(--color-text-muted)] italic">
+                            <span className="text-[0.65rem] italic text-[var(--color-text-muted)]">
                               (sin tipo de cambio)
                             </span>
                           )
@@ -275,7 +280,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
                       )}
                     </div>
 
-                    <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                       <ExpenseAdminActions
                         expenseId={expense.id}
                         currentStatus={expense.status ?? "pending"}

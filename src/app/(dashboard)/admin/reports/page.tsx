@@ -43,109 +43,164 @@ export default async function AdminReportsPage({
   const pendingCount = reports.filter((r) => r.status === "open").length;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+    <div className="w-full max-w-full space-y-5">
+      <div className="space-y-3">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+        >
+          <span>←</span>
+          <span>Volver</span>
+        </Link>
+        <div className="min-w-0">
           <h1 className="page-title">Rendiciones — Admin</h1>
           <p className="page-subtitle">
             {reports.length} rendiciones · {pendingCount} abiertas
           </p>
         </div>
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.75rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-        >
-          <span>←</span>
-          <span>Volver al panel admin</span>
-        </Link>
       </div>
 
       <Suspense fallback={null}>
         <CountryFilter basePath="/dashboard/admin/reports" />
       </Suspense>
 
-      <div className="card overflow-hidden">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-[#f5f1f8] text-xs uppercase text-[var(--color-text-muted)]">
-            <tr>
-              <th className="px-4 py-3 font-medium">Empleado</th>
-              <th className="px-4 py-3 font-medium hidden lg:table-cell">País</th>
-              <th className="px-4 py-3 font-medium hidden md:table-cell">Período</th>
-              <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Total</th>
-              <th className="px-4 py-3 font-medium hidden sm:table-cell">Gastos</th>
-              <th className="px-4 py-3 font-medium">Estado</th>
-              <th className="px-4 py-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports && reports.length > 0 ? (
-              reports.map((r) => {
-                const user = r.profiles as { full_name: string; email: string; country?: string } | null;
-                const expenseCount = (r.expenses as { count: number }[])?.[0]?.count ?? 0;
-                const isOpen = r.status === "open";
-                return (
-                  <tr
-                    key={r.id}
-                    className="border-t border-[#f0ecf4] hover:bg-[#faf7fd] transition-colors"
-                  >
-                    <td className="px-4 py-3 align-middle">
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+      <div className="card w-full overflow-hidden">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-[#f5f1f8] text-xs uppercase text-[var(--color-text-muted)]">
+              <tr>
+                <th className="px-4 py-3 font-medium">Empleado</th>
+                <th className="hidden px-4 py-3 font-medium lg:table-cell">País</th>
+                <th className="px-4 py-3 font-medium">Período</th>
+                <th className="px-4 py-3 font-medium text-right">Total</th>
+                <th className="px-4 py-3 font-medium">Gastos</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports && reports.length > 0 ? (
+                reports.map((r) => {
+                  const user = r.profiles as { full_name: string; email: string; country?: string } | null;
+                  const expenseCount = (r.expenses as { count: number }[])?.[0]?.count ?? 0;
+                  const isOpen = r.status === "open";
+                  return (
+                    <tr key={r.id} className="border-t border-[#f0ecf4] transition-colors hover:bg-[#faf7fd]">
+                      <td className="px-4 py-3 align-middle">
+                        <Link href={`/dashboard/admin/reports/${r.id}`} className="block">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            {user?.full_name ?? "—"}
+                          </p>
+                          <p className="text-[0.7rem] text-[var(--color-text-muted)]">{user?.email}</p>
+                          {r.title && (
+                            <p className="max-w-[180px] truncate text-[0.7rem] font-medium text-[var(--color-primary)]">
+                              {r.title}
+                            </p>
+                          )}
+                        </Link>
+                      </td>
+                      <td className="hidden px-4 py-3 align-middle text-xs text-[var(--color-text-muted)] lg:table-cell">
+                        {user?.country ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 align-middle text-xs text-[var(--color-text-muted)]">
+                        {new Date(r.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+                        {" – "}
+                        {new Date(r.week_end + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 align-middle text-right text-sm font-semibold">
+                        {Number(r.total_amount ?? 0).toLocaleString("es-UY", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        <span className="text-xs font-normal text-[var(--color-text-muted)]">USD</span>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-muted)]">
+                        {expenseCount} {expenseCount === 1 ? "gasto" : "gastos"}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
+                          isOpen
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-purple-100 text-[var(--color-primary)]"
+                        }`}>
+                          {isOpen ? "Abierta" : "Cerrada"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+                    No hay rendiciones aún.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="divide-y divide-[#f0ecf4] md:hidden">
+          {reports && reports.length > 0 ? (
+            reports.map((r) => {
+              const user = r.profiles as { full_name: string; email: string; country?: string } | null;
+              const expenseCount = (r.expenses as { count: number }[])?.[0]?.count ?? 0;
+              const isOpen = r.status === "open";
+              return (
+                <Link
+                  key={r.id}
+                  href={`/dashboard/admin/reports/${r.id}`}
+                  className="flex w-full items-center gap-3 px-4 py-3 transition-colors active:bg-[#f5f1f8] max-[430px]:px-3"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-[var(--color-primary)]">
+                    {(user?.full_name ?? "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                         {user?.full_name ?? "—"}
                       </p>
-                      <p className="text-[0.7rem] text-[var(--color-text-muted)]">{user?.email}</p>
-                      {r.title && (
-                        <p className="text-[0.7rem] font-medium text-[var(--color-primary)] truncate max-w-[180px]">
-                          {r.title}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-muted)] hidden lg:table-cell">
-                      {user?.country ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-muted)] hidden md:table-cell whitespace-nowrap">
-                      {new Date(r.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-                      {" – "}
-                      {new Date(r.week_end + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
-                    </td>
-                    <td className="px-4 py-3 align-middle text-right text-sm font-semibold hidden sm:table-cell whitespace-nowrap">
-                      {Number(r.total_amount ?? 0).toLocaleString("es-UY", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      <span className="text-xs font-normal text-[var(--color-text-muted)]">USD</span>
-                    </td>
-                    <td className="px-4 py-3 align-middle text-xs text-[var(--color-text-muted)] hidden sm:table-cell">
-                      {expenseCount} {expenseCount === 1 ? "gasto" : "gastos"}
-                    </td>
-                    <td className="px-4 py-3 align-middle">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${
                         isOpen
                           ? "bg-emerald-100 text-emerald-700"
-                          : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+                          : "bg-purple-100 text-[var(--color-primary)]"
                       }`}>
                         {isOpen ? "Abierta" : "Cerrada"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 align-middle text-right">
-                      <Link
-                        href={`/dashboard/admin/reports/${r.id}`}
-                        className="inline-flex w-full items-center justify-center rounded-full border border-[#e5e2ea] px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8] sm:w-auto sm:text-[0.7rem]"
-                      >
-                        Revisar →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
-                  No hay rendiciones aún.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    </div>
+                    {r.title && (
+                      <p className="truncate text-[0.7rem] font-medium text-[var(--color-primary)]">
+                        {r.title}
+                      </p>
+                    )}
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[0.65rem] text-[var(--color-text-muted)]">
+                      <span>
+                        {new Date(r.week_start + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+                        {" – "}
+                        {new Date(r.week_end + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+                      </span>
+                      <span>{expenseCount} {expenseCount === 1 ? "gasto" : "gastos"}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {Number(r.total_amount ?? 0).toLocaleString("es-UY", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                    <p className="text-[0.6rem] text-[var(--color-text-muted)]">USD</p>
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <div className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+              No hay rendiciones aún.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

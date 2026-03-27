@@ -64,20 +64,20 @@ export function ExchangeRateEditor({ reportId, currencies, savedRates, globalPre
   }
 
   return (
-    <div className="card p-4 space-y-4 border-l-4 border-[var(--color-secondary)]">
-      <div>
+    <div className="card w-full space-y-4 border-l-4 border-[var(--color-secondary)] p-3 sm:p-4">
+      <div className="min-w-0">
         <p className="text-sm font-semibold text-[var(--color-text-primary)]">Tipos de cambio</p>
-        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+        <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
           Ingresá cuántas unidades de cada moneda equivalen a <strong>1 USD</strong>.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {currencies.map((currency) => {
           const isFromPreset = !savedRates[currency] && !!globalPresets?.[currency];
           return (
-          <div key={currency} className="space-y-1.5">
-            <div className="flex items-center justify-between">
+          <div key={currency} className="w-full min-w-0 space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <label className="text-xs font-semibold text-[var(--color-text-primary)]">
                 {currency}
                 {CURRENCY_LABELS[currency] ? (
@@ -85,26 +85,25 @@ export function ExchangeRateEditor({ reportId, currencies, savedRates, globalPre
                 ) : null}
               </label>
               {isFromPreset && (
-                <span className="text-[0.6rem] font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-1.5 py-0.5 rounded-full">
+                <span className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[0.6rem] font-medium text-[var(--color-primary)]">
                   Preset global
                 </span>
               )}
             </div>
-            {/* Input group */}
-            <div className="flex h-11 overflow-hidden rounded-xl border border-[#d4cfe0] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20 bg-white transition-all">
-              <span className="flex items-center bg-[#f5f1f8] px-3 text-xs font-semibold text-[var(--color-text-muted)] border-r border-[#d4cfe0] whitespace-nowrap shrink-0">
+            <div className="flex h-10 w-full overflow-hidden rounded-xl border border-[#d4cfe0] bg-white transition-all focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
+              <span className="flex shrink-0 items-center border-r border-[#d4cfe0] bg-[#f5f1f8] px-2 text-[0.7rem] font-semibold text-[var(--color-text-muted)] sm:px-3 sm:text-xs">
                 1 USD =
               </span>
               <input
                 type="number"
                 step="0.01"
                 min="0.01"
-                className="flex-1 bg-transparent px-3 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] min-w-0"
+                className="min-w-0 flex-1 bg-transparent px-2 text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] sm:px-3"
                 placeholder="0.00"
                 value={rates[currency] ?? ""}
                 onChange={(e) => setRates((prev) => ({ ...prev, [currency]: e.target.value }))}
               />
-              <span className="flex items-center bg-[#f5f1f8] px-3 text-xs font-semibold text-[var(--color-text-muted)] border-l border-[#d4cfe0] shrink-0">
+              <span className="flex shrink-0 items-center border-l border-[#d4cfe0] bg-[#f5f1f8] px-2 text-[0.7rem] font-semibold text-[var(--color-text-muted)] sm:px-3 sm:text-xs">
                 {currency}
               </span>
             </div>
@@ -116,7 +115,7 @@ export function ExchangeRateEditor({ reportId, currencies, savedRates, globalPre
       <button
         onClick={handleSave}
         disabled={saving}
-        className="btn-primary w-full sm:w-auto text-sm"
+        className="btn-primary w-full text-center text-sm sm:w-auto"
       >
         {saving ? "Guardando..." : "Guardar tipos de cambio"}
       </button>
