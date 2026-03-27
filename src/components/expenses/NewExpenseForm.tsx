@@ -45,7 +45,6 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
   const [filesUploaded, setFilesUploaded] = useState<UploadedFile[]>([]);
   const [categoria,   setCategoria]  = useState<ExpenseCategory>("transport");
   const [descripcion, setDescripcion] = useState("");
-  const [merchant,    setMerchant]    = useState("");
   const [moneda,      setMoneda]      = useState<string>("UYU");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
@@ -93,7 +92,7 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
         user_id:              session.user.id,
         category:             categoria,
         description:          descripcion.trim(),
-        merchant_name:        merchant.trim() || null,
+        merchant_name:        null,
         amount:               0,
         currency:             moneda,
         expense_date:         todayStr,
@@ -126,7 +125,6 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
         moneda: expense.currency ?? moneda,
         fecha: expense.expense_date ?? todayStr,
         comprobante_url: expense.ticket_url ?? allUrls[0],
-        merchant_name: expense.merchant_name ?? undefined,
       });
     } catch (err) {
       console.error("Error enviando webhook de factura a n8n:", err);
@@ -196,20 +194,11 @@ export function NewExpenseForm({ reportId, returnTo }: NewExpenseFormProps) {
       {/* ── Comercio / Empresa ───────────────────────────────── */}
       <section className="space-y-2">
         <label className="block text-sm font-semibold text-[var(--color-text-primary)]">
-          Comercio / Empresa{" "}
-          <span className="font-normal text-[var(--color-text-muted)]">(opcional)</span>
+          Comercio / Empresa
         </label>
-        <input
-          type="text"
-          className="input"
-          placeholder="Nombre del comercio, empresa o proveedor..."
-          value={merchant}
-          onChange={(e) => setMerchant(e.target.value)}
-          maxLength={120}
-        />
-        <p className="text-[0.7rem] text-[var(--color-text-muted)]">
-          Si subís un ticket, este campo se puede completar automáticamente a partir de la lectura del comprobante.
-        </p>
+        <div className="input flex items-center bg-[#faf8fc] text-[var(--color-text-muted)]">
+          Se completa automáticamente con IA a partir del comprobante.
+        </div>
       </section>
 
       {/* ── Moneda ──────────────────────────────────────────── */}
