@@ -116,9 +116,9 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
   const endDate   = new Date(report.week_end   + "T12:00:00");
 
   return (
-    <div className="space-y-5">
+    <div className="w-full max-w-full space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="space-y-3">
         <Link
           href={returnTo ?? "/dashboard/aprobador"}
           className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
@@ -126,69 +126,73 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
           <span>←</span>
           <span>
             {returnTo?.startsWith("/dashboard/aprobador/employee/")
-              ? "Volver a la rendición del empleado"
+              ? "Volver al empleado"
               : "Volver a aprobaciones"}
           </span>
         </Link>
-        <h1 className="page-title mt-1">
-          {report.title ?? (
-            <>
-              {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-              {" – "}
-              {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
-            </>
-          )}
-        </h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-          {" – "}
-          {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
-        </p>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1">
-          <span className="font-semibold text-[var(--color-text-primary)]">{owner?.full_name ?? "—"}</span>
-          {owner?.email && ` · ${owner.email}`}
-          {owner?.department && ` · ${owner.department}`}
-        </p>
+        <div className="min-w-0">
+          <h1 className="page-title break-words">
+            {report.title ?? (
+              <>
+                {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+                {" – "}
+                {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
+              </>
+            )}
+          </h1>
+          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+            {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+            {" – "}
+            {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+          <p className="mt-1 break-words text-sm text-[var(--color-text-muted)]">
+            <span className="font-semibold text-[var(--color-text-primary)]">{owner?.full_name ?? "—"}</span>
+            {owner?.email && ` · ${owner.email}`}
+            {owner?.department && ` · ${owner.department}`}
+          </p>
+        </div>
       </div>
 
-      {/* Status + budget + acciones de supervisor / pagador */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-            workflowStatus === "submitted"
-              ? "bg-amber-100 text-amber-700"
-              : workflowStatus === "approved"
-                ? "bg-emerald-100 text-emerald-700"
-                : workflowStatus === "paid"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700"
-          }`}
-        >
-          {workflowStatus === "submitted"
-            ? "En revisión"
-            : workflowStatus === "approved"
-              ? "Cerrada / Aprobada"
-              : workflowStatus === "paid"
-                ? "Pagada"
-                : workflowStatus === "needs_correction"
-                  ? "Devuelta al empleado"
-                  : "Borrador"}
-        </span>
-        {budgetMax && (
+      {/* Status + budget + acciones */}
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`text-xs font-semibold ${
-              budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
+            className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
+              workflowStatus === "submitted"
+                ? "bg-amber-100 text-amber-700"
+                : workflowStatus === "approved"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : workflowStatus === "paid"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-700"
             }`}
           >
-            Presupuesto: {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
-            {budgetOverrun && " ⚠ Excedido"}
+            {workflowStatus === "submitted"
+              ? "En revisión"
+              : workflowStatus === "approved"
+                ? "Aprobada"
+                : workflowStatus === "paid"
+                  ? "Pagada"
+                  : workflowStatus === "needs_correction"
+                    ? "Devuelta"
+                    : "Borrador"}
           </span>
-        )}
-        <div className="ml-auto flex items-center gap-2">
+          {budgetMax && (
+            <span
+              className={`break-words text-xs font-semibold ${
+                budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
+              }`}
+            >
+              {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
+              {budgetOverrun && " ⚠"}
+            </span>
+          )}
+        </div>
+        <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
           {workflowStatus === "approved" && (
             <a
               href={`/api/reports/export?report_id=${report.id}`}
-              className="rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
+              className="w-full rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-center text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8] sm:w-auto"
             >
               Exportar Excel
             </a>
@@ -198,58 +202,58 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
           )}
           {workflowStatus === "submitted" && (
             <>
-            {hasProblemExpenses && (
-              <form action={returnReportAction}>
+              {hasProblemExpenses && (
+                <form action={returnReportAction} className="w-full sm:w-auto">
+                  <input type="hidden" name="reportId" value={report.id} />
+                  <button
+                    type="submit"
+                    className="w-full rounded-full bg-amber-100 px-3 py-1 text-center text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-200 sm:w-auto"
+                  >
+                    Devolver para corrección
+                  </button>
+                </form>
+              )}
+              <form action={approveReportAction} className="w-full sm:w-auto">
                 <input type="hidden" name="reportId" value={report.id} />
                 <button
                   type="submit"
-                  className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-200 transition-colors"
+                  disabled={!allExpensesApproved}
+                  className="w-full rounded-full bg-emerald-500 px-3 py-1 text-center text-xs font-semibold text-white transition-all hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  title={
+                    !allExpensesApproved
+                      ? "Debes aprobar todos los gastos individuales primero"
+                      : "Aprobar Rendición Completa"
+                  }
                 >
-                  Devolver para corrección
+                  {allExpensesApproved
+                    ? "Aprobar rendición"
+                    : "Aprobar gastos pendientes..."}
                 </button>
               </form>
-            )}
-            <form action={approveReportAction}>
-              <input type="hidden" name="reportId" value={report.id} />
-              <button
-                type="submit"
-                disabled={!allExpensesApproved}
-                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                title={
-                  !allExpensesApproved
-                    ? "Debes aprobar todos los gastos individuales primero"
-                    : "Aprobar Rendición Completa"
-                }
-              >
-                {allExpensesApproved
-                  ? "Aprobar rendición"
-                  : "Aprobar gastos pendientes..."}
-              </button>
-            </form>
             </>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {[
           { label: "Pendientes",  value: pendingCount,   color: "text-amber-600" },
           { label: "En revisión", value: reviewingCount, color: "text-blue-600" },
           { label: "Aprobados",   value: approvedCount,  color: "text-emerald-600" },
           { label: "Rechazados",  value: rejectedCount,  color: "text-red-600" },
         ].map((s) => (
-          <div key={s.label} className="card p-3 text-center">
-            <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">{s.label}</p>
-            <p className={`mt-1 text-xl font-bold ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="card px-2 py-3 text-center sm:p-3">
+            <p className="truncate text-[0.55rem] font-semibold uppercase text-[var(--color-text-muted)] sm:text-[0.65rem]">{s.label}</p>
+            <p className={`mt-1 text-lg font-bold sm:text-xl ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Budget bar */}
       {budgetMax && totalInBudgetCurrency !== null && (
-        <div className="card p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs">
+        <div className="card w-full space-y-2 p-3 sm:p-4">
+          <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:justify-between">
             <span className="font-semibold uppercase text-[var(--color-text-muted)]">Presupuesto</span>
             <span className={`font-bold ${budgetOverrun ? "text-red-600" : "text-[var(--color-text-primary)]"}`}>
               {budgetCurrency} {fmt(totalInBudgetCurrency)} / {budgetCurrency} {fmt(budgetMax)}
@@ -317,14 +321,14 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
       )}
 
       {/* Expense list */}
-      <div className="card overflow-hidden">
-        <div className="border-b border-[#f0ecf4] px-4 py-3 space-y-1">
+      <div className="card w-full overflow-hidden">
+        <div className="space-y-1 border-b border-[#f0ecf4] px-4 py-3 max-[430px]:px-3">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Gastos ({expenseList.length})
           </h2>
           {expenseList.length > 0 && (
             <p className="text-[0.7rem] text-[var(--color-text-muted)]">
-              Hacé clic en cualquier gasto para ver el detalle completo (imagen del comprobante, comentarios, etc.).
+              Tocá cualquier gasto para ver el detalle completo.
             </p>
           )}
         </div>
@@ -342,56 +346,54 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
                 <Link
                   key={expense.id}
                   href={`/dashboard/expenses/${expense.id}?returnTo=${encodeURIComponent(expenseReturnTo)}`}
-                  className="block hover:bg-[#fdfbff] transition-colors"
+                  className="block w-full transition-colors hover:bg-[#fdfbff]"
                 >
-                  <div className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                            {expense.description}
+                  <div className="w-full px-4 py-3 max-[430px]:px-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className="min-w-0 break-words text-sm font-semibold text-[var(--color-text-primary)]">
+                          {expense.description}
+                        </span>
+                        <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                      </div>
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
+                        {expense.expense_date && (
+                          <span>
+                            {new Date(
+                              expense.expense_date + "T12:00:00",
+                            ).toLocaleDateString("es-UY")}
                           </span>
-                          <ExpenseStatusBadge status={expense.status ?? "pending"} />
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
-                          {expense.expense_date && (
-                            <span>
-                              {new Date(
-                                expense.expense_date + "T12:00:00",
-                              ).toLocaleDateString("es-UY")}
-                            </span>
-                          )}
-                          <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
-                          <span className="text-[var(--color-text-primary)]">
-                            {expense.merchant_name || "-"}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
-                          <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                            {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
-                          </span>
-                          {!isUSD && usdAmount !== null && (
-                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
-                              ≈ USD {fmt(usdAmount)}
-                            </span>
-                          )}
-                        </div>
-                        {expense.rejection_reason && (
-                          <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
-                            Motivo de rechazo: {expense.rejection_reason}
-                          </p>
                         )}
-                        {expense.admin_notes && expense.status === "reviewing" && (
-                          <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
-                            Nota: {expense.admin_notes}
-                          </p>
-                        )}
-                        {expense.employee_response && (
-                          <p className="rounded-lg bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
-                            Respuesta del rendidor: {expense.employee_response}
-                          </p>
+                        <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
+                        <span className="text-[var(--color-text-primary)]">
+                          {expense.merchant_name || "-"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                          {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
+                        </span>
+                        {!isUSD && usdAmount !== null && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            ≈ USD {fmt(usdAmount)}
+                          </span>
                         )}
                       </div>
+                      {expense.rejection_reason && (
+                        <p className="break-words rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                          Motivo de rechazo: {expense.rejection_reason}
+                        </p>
+                      )}
+                      {expense.admin_notes && expense.status === "reviewing" && (
+                        <p className="break-words rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                          Nota: {expense.admin_notes}
+                        </p>
+                      )}
+                      {expense.employee_response && (
+                        <p className="break-words rounded-lg bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+                          Respuesta del rendidor: {expense.employee_response}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </Link>

@@ -85,19 +85,18 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
       : returnTo;
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="w-full max-w-2xl space-y-5">
       {/* Encabezado */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <h1 className="page-title">Detalle de gasto</h1>
-          <p className="page-subtitle">{e.description}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <ExpenseStatusBadge status={e.status ?? "pending"} />
           {canEditOwn && (
             <Link
               href={`/dashboard/expenses/${e.id}/edit`}
-              className={`text-xs font-semibold inline-flex items-center rounded-full px-3 py-1.5 transition-colors ${
+              className={`text-xs font-semibold inline-flex items-center justify-center rounded-full px-3 py-1.5 text-center transition-colors ${
                 e.status === "reviewing"
                   ? "bg-amber-500 text-white hover:bg-amber-600"
                   : "btn-primary text-sm"
@@ -124,7 +123,7 @@ export default async function ExpenseDetailPage({ params, searchParams }: Expens
         />
       )}
 
-      <div className="grid gap-4 md:grid-cols-[1fr,1fr]">
+      <div className="grid w-full gap-4 md:grid-cols-2">
         {/* Datos del gasto */}
         <div className="card p-5 space-y-3 text-sm">
           <Row label="Descripción" value={e.description} />
@@ -329,9 +328,9 @@ async function updateExpenseStatusAction(
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-2">
-      <span className="text-[var(--color-text-muted)] shrink-0">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+    <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-2">
+      <span className="shrink-0 text-[var(--color-text-muted)]">{label}</span>
+      <span className="min-w-0 break-words font-medium sm:text-right">{value}</span>
     </div>
   );
 }

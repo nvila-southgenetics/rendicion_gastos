@@ -64,30 +64,32 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
     : allReports;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2">
+    <div className="w-full max-w-full space-y-5">
+      <div className="space-y-3">
         <Link
           href="/dashboard/viewer"
           className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
           <span>←</span>
-          <span>Volver a ver rendiciones</span>
+          <span>Volver</span>
         </Link>
-        <h1 className="page-title mt-1">Rendiciones de {employee.full_name}</h1>
-        <p className="page-subtitle">
-          Vista solo lectura de todas las rendiciones asociadas a este empleado.
-        </p>
+        <div className="min-w-0">
+          <h1 className="page-title break-words">Rendiciones de {employee.full_name}</h1>
+          <p className="page-subtitle">
+            Vista solo lectura de las rendiciones de este empleado.
+          </p>
+        </div>
       </div>
 
-      <div className="card p-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700">
+      <div className="card flex w-full items-center gap-2 p-3 sm:gap-3 sm:p-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700 sm:h-10 sm:w-10">
           {employee.full_name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm text-[var(--color-text-primary)] truncate">
+          <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
             {employee.full_name}
           </p>
-          <p className="text-[0.65rem] text-[var(--color-text-muted)] truncate">
+          <p className="truncate text-[0.65rem] text-[var(--color-text-muted)]">
             {employee.email}
             {employee.department && ` · ${employee.department}`}
           </p>
@@ -95,14 +97,14 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
       </div>
 
       {reportList.length === 0 ? (
-        <div className="card p-10 text-center space-y-2">
+        <div className="card space-y-2 p-10 text-center">
           <p className="text-sm text-[var(--color-text-muted)]">
             Este empleado aún no tiene rendiciones.
           </p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="border-b border-[#f0ecf4] px-4 py-3 flex items-center justify-between">
+        <div className="card w-full overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[#f0ecf4] px-4 py-3 max-[430px]:px-3">
             <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
               Rendiciones ({reportList.length})
             </h2>
@@ -133,13 +135,13 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
 
               const label =
                 ws === "submitted"
-                  ? "En revisión"
+                  ? "Revisión"
                   : ws === "approved"
-                    ? "Cerrada / Aprobada"
+                    ? "Aprobada"
                     : ws === "paid"
                       ? "Pagada"
                       : ws === "needs_correction"
-                        ? "Devuelta al empleado"
+                        ? "Devuelta"
                         : "Borrador";
 
               const badgeClasses =
@@ -157,19 +159,18 @@ export default async function ViewerEmployeeReportsPage({ params }: Props) {
                 <Link
                   key={r.id}
                   href={`/dashboard/viewer/reports/${r.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#fdfbff] transition-colors"
+                  className="flex w-full min-w-0 items-center justify-between gap-2 px-4 py-3 transition-colors hover:bg-[#fdfbff] max-[430px]:px-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                    <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
                       {r.title ?? `${startDate} – ${endDate}`}
                     </p>
-                    <p className="text-[0.65rem] text-[var(--color-text-muted)]">
-                      {startDate} – {endDate} · {expCount} gasto
-                      {expCount !== 1 ? "s" : ""}
+                    <p className="truncate text-[0.65rem] text-[var(--color-text-muted)]">
+                      {startDate} – {endDate} · {expCount} gasto{expCount !== 1 ? "s" : ""}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${badgeClasses}`}
+                    className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${badgeClasses}`}
                   >
                     {label}
                   </span>

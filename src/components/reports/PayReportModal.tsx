@@ -62,7 +62,7 @@ export function PayReportModal({
       <Dialog.Trigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-center text-xs font-semibold text-white hover:bg-blue-700"
         >
           <CreditCard className="h-3 w-3" />
           Pagar rendición

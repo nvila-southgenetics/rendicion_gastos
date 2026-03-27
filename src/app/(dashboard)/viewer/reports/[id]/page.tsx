@@ -93,9 +93,9 @@ export default async function ViewerReportDetailPage({ params }: Props) {
     | "paid";
 
   return (
-    <div className="space-y-5">
+    <div className="w-full max-w-full space-y-5">
       {/* Header */}
-      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-3">
         <Link
           href={
             isPagador
@@ -105,72 +105,74 @@ export default async function ViewerReportDetailPage({ params }: Props) {
           className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
         >
           <span>←</span>
-          <span>
-            {isPagador ? "Volver a rendiciones del empleado" : "Volver a ver rendiciones"}
-          </span>
+          <span>Volver</span>
         </Link>
-        <h1 className="page-title mt-1">
-          {report.title ?? (
-            <>
-              {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-              {" – "}
-              {endDate.toLocaleDateString("es-UY", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </>
-          )}
-        </h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
-          {" – "}
-          {endDate.toLocaleDateString("es-UY", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1">
-          <span className="font-semibold text-[var(--color-text-primary)]">
-            {owner?.full_name ?? "—"}
-          </span>
-          {owner?.email && ` · ${owner.email}`}
-          {owner?.department && ` · ${owner.department}`}
-        </p>
+        <div className="min-w-0">
+          <h1 className="page-title break-words">
+            {report.title ?? (
+              <>
+                {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+                {" – "}
+                {endDate.toLocaleDateString("es-UY", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </>
+            )}
+          </h1>
+          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+            {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
+            {" – "}
+            {endDate.toLocaleDateString("es-UY", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+          <p className="mt-1 break-words text-sm text-[var(--color-text-muted)]">
+            <span className="font-semibold text-[var(--color-text-primary)]">
+              {owner?.full_name ?? "—"}
+            </span>
+            {owner?.email && ` · ${owner.email}`}
+            {owner?.department && ` · ${owner.department}`}
+          </p>
+        </div>
       </div>
 
-      {/* Status + budget (solo lectura) */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-            report.status === "open"
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-          }`}
-        >
-          {report.status === "open" ? "Abierta" : "Cerrada"}
-        </span>
-        {budgetMax && (
+      {/* Status + budget */}
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`text-xs font-semibold ${
-              budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
+            className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
+              report.status === "open"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
             }`}
           >
-            Presupuesto: {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
-            {budgetOverrun && " ⚠ Excedido"}
+            {report.status === "open" ? "Abierta" : "Cerrada"}
           </span>
-        )}
-        <div className="ml-auto flex items-center gap-2">
-          {isPagador && workflowStatus === "approved" && (
-            <PayReportModal reportId={report.id} suggestedAmount={totalInBudgetCurrency} />
+          {budgetMax && (
+            <span
+              className={`break-words text-xs font-semibold ${
+                budgetOverrun ? "text-red-600" : "text-[var(--color-text-muted)]"
+              }`}
+            >
+              {totalInBudgetCurrency !== null ? `${budgetCurrency} ${fmt(totalInBudgetCurrency)}` : "—"} / {budgetCurrency} {fmt(budgetMax)}
+              {budgetOverrun && " ⚠"}
+            </span>
           )}
         </div>
+        {isPagador && workflowStatus === "approved" && (
+          <div className="w-full sm:ml-auto sm:w-auto">
+            <PayReportModal reportId={report.id} suggestedAmount={totalInBudgetCurrency} />
+          </div>
+        )}
       </div>
 
       {/* Información de pago */}
       {workflowStatus === "paid" && (
-        <div className="card p-4 space-y-2">
+        <div className="card w-full space-y-2 p-3 sm:p-4">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Información de pago
           </h2>
@@ -218,31 +220,29 @@ export default async function ViewerReportDetailPage({ params }: Props) {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {[
           { label: "Pendientes", value: pendingCount, color: "text-amber-600" },
           { label: "En revisión", value: reviewingCount, color: "text-blue-600" },
           { label: "Aprobados", value: approvedCount, color: "text-emerald-600" },
           { label: "Rechazados", value: rejectedCount, color: "text-red-600" },
         ].map((s) => (
-          <div key={s.label} className="card p-3 text-center">
-            <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">
-              {s.label}
-            </p>
-            <p className={`mt-1 text-xl font-bold ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="card px-2 py-3 text-center sm:p-3">
+            <p className="truncate text-[0.55rem] font-semibold uppercase text-[var(--color-text-muted)] sm:text-[0.65rem]">{s.label}</p>
+            <p className={`mt-1 text-lg font-bold sm:text-xl ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Lista de gastos (solo lectura, con acceso al detalle) */}
-      <div className="card overflow-hidden">
-        <div className="border-b border-[#f0ecf4] px-4 py-3">
+      {/* Lista de gastos */}
+      <div className="card w-full overflow-hidden">
+        <div className="space-y-1 border-b border-[#f0ecf4] px-4 py-3 max-[430px]:px-3">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Gastos ({expenseList.length})
           </h2>
           {expenseList.length > 0 && (
             <p className="text-[0.7rem] text-[var(--color-text-muted)]">
-              Hacé clic en cualquier gasto para ver el detalle completo en modo solo lectura.
+              Tocá cualquier gasto para ver el detalle completo.
             </p>
           )}
         </div>
@@ -260,48 +260,46 @@ export default async function ViewerReportDetailPage({ params }: Props) {
                 <Link
                   key={expense.id}
                   href={`/dashboard/expenses/${expense.id}?returnTo=/dashboard/viewer/reports/${report.id}`}
-                  className="block hover:bg-[#fdfbff] transition-colors"
+                  className="block w-full transition-colors hover:bg-[#fdfbff]"
                 >
-                  <div className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                            {expense.description}
+                  <div className="w-full px-4 py-3 max-[430px]:px-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className="min-w-0 break-words text-sm font-semibold text-[var(--color-text-primary)]">
+                          {expense.description}
+                        </span>
+                        <ExpenseStatusBadge status={expense.status ?? "pending"} />
+                      </div>
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
+                        {expense.expense_date && (
+                          <span>
+                            {new Date(
+                              expense.expense_date + "T12:00:00",
+                            ).toLocaleDateString("es-UY")}
                           </span>
-                          <ExpenseStatusBadge status={expense.status ?? "pending"} />
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--color-text-muted)]">
-                          {expense.expense_date && (
-                            <span>
-                              {new Date(
-                                expense.expense_date + "T12:00:00",
-                              ).toLocaleDateString("es-UY")}
-                            </span>
-                          )}
-                          <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
-                        </div>
-                        <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
-                          <span className="text-sm font-bold text-[var(--color-text-primary)]">
-                            {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
-                          </span>
-                          {!isUSD && usdAmount !== null && (
-                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
-                              ≈ USD {fmt(usdAmount)}
-                            </span>
-                          )}
-                        </div>
-                        {expense.rejection_reason && (
-                          <p className="rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
-                            Motivo de rechazo: {expense.rejection_reason}
-                          </p>
                         )}
-                        {expense.admin_notes && expense.status === "reviewing" && (
-                          <p className="rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
-                            Nota: {expense.admin_notes}
-                          </p>
+                        <span>{CATEGORY_LABELS[expense.category] ?? expense.category}</span>
+                      </div>
+                      <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+                        <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                          {fmt(Number(expense.amount))} {expense.currency ?? "UYU"}
+                        </span>
+                        {!isUSD && usdAmount !== null && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            ≈ USD {fmt(usdAmount)}
+                          </span>
                         )}
                       </div>
+                      {expense.rejection_reason && (
+                        <p className="break-words rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">
+                          Motivo de rechazo: {expense.rejection_reason}
+                        </p>
+                      )}
+                      {expense.admin_notes && expense.status === "reviewing" && (
+                        <p className="break-words rounded-lg bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                          Nota: {expense.admin_notes}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </Link>

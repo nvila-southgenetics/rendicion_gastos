@@ -185,16 +185,16 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
           </div>
         )}
         {isOwner && isOpen && canEmployeeEditReport && (
-          <Link href={`/dashboard/expenses/new?reportId=${r.id}`} className="btn-primary text-sm ml-auto">
+          <Link href={`/dashboard/expenses/new?reportId=${r.id}`} className="btn-primary w-full text-center text-sm sm:ml-auto sm:w-auto">
             + Agregar gasto
           </Link>
         )}
         {isOwner && canEmployeeEditReport && (
-          <form action={submitReportAction} className="ml-auto">
+          <form action={submitReportAction} className="w-full sm:ml-auto sm:w-auto">
             <input type="hidden" name="reportId" value={r.id} />
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-3 py-1 text-xs font-semibold text-white hover:bg-[var(--color-primary-dark)]"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] px-3 py-1 text-center text-xs font-semibold text-white hover:bg-[var(--color-primary-dark)] sm:w-auto"
             >
               Cerrar y enviar rendición
             </button>
@@ -328,15 +328,14 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                       </div>
                     )}
 
-                    {/* Acción "Corregir" visible también en mobile */}
                     {canEmployeeEditReport &&
                       (expense.status === "reviewing" || expense.status === "rejected") && (
-                        <div className="mx-4 mb-3 mt-1">
+                        <div className="mx-4 mb-3 mt-1 flex justify-center">
                           <Link
                             href={`/dashboard/expenses/${expense.id}/edit`}
-                            className="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold text-amber-600 hover:underline"
+                            className="inline-flex w-full items-center justify-center gap-1 rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 sm:w-auto"
                           >
-                            Corregir
+                            Corregir gasto
                           </Link>
                         </div>
                       )}
@@ -402,13 +401,13 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
                       <td className="px-4 py-3 align-middle">
                         <ExpenseStatusBadge status={expense.status ?? "pending"} />
                       </td>
-                      <td className="px-4 py-3 align-middle text-right">
+                      <td className="px-4 py-3 align-middle text-center">
                         {canEmployeeEditReport &&
                         (expense.status === "reviewing" ||
                           expense.status === "rejected") ? (
                           <Link
                             href={`/dashboard/expenses/${expense.id}/edit`}
-                            className="text-xs font-semibold text-amber-600 hover:underline"
+                            className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-amber-600"
                           >
                             Corregir
                           </Link>

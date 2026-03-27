@@ -61,15 +61,15 @@ export default async function AprobadorHomePage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-          <h1 className="page-title">Aprobaciones</h1>
+    <div className="w-full max-w-full space-y-5">
+      <div className="min-w-0">
+        <h1 className="page-title">Aprobaciones</h1>
         <p className="page-subtitle">
           Aprobás rendiciones de {employees.length} {employees.length === 1 ? "persona" : "personas"}.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid w-full gap-4 sm:grid-cols-2">
         {employees.map((emp) => {
           const empReports = reportsByEmployee[emp.id] ?? [];
           const paidReports = empReports.filter((r) => (r as any).workflow_status === "paid").length;
@@ -85,54 +85,54 @@ export default async function AprobadorHomePage() {
             <Link
               key={emp.id}
               href={`/dashboard/aprobador/employee/${emp.id}`}
-              className="card p-4 space-y-3 hover:border-[var(--color-primary)]/30 hover:bg-[#f5f1f8] transition-colors"
+              className="card w-full p-4 space-y-3 hover:bg-[#f5f1f8] transition-colors"
             >
               {/* Employee header */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-purple-700">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-bold text-purple-700 sm:h-10 sm:w-10">
                   {emp.full_name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-[var(--color-text-primary)] truncate">
+                  <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                     {emp.full_name}
                   </p>
-                  <p className="text-[0.65rem] text-[var(--color-text-muted)] truncate">{emp.email}</p>
+                  <p className="truncate text-[0.65rem] text-[var(--color-text-muted)]">{emp.email}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[0.65rem] font-medium text-blue-700">
+                <span className="hidden shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[0.65rem] font-medium text-blue-700 sm:inline-flex">
                   {ROLE_LABELS[emp.role] ?? emp.role}
                 </span>
               </div>
 
               {/* Quick stats */}
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-lg bg-blue-50 p-2">
-                  <p className="text-[0.6rem] font-semibold uppercase text-blue-600">Pagadas</p>
-                  <p className="text-base font-bold text-blue-700">{paidReports}</p>
+              <div className="grid grid-cols-3 gap-1.5 text-center sm:gap-2">
+                <div className="rounded-lg bg-blue-50 px-1 py-2 sm:p-2">
+                  <p className="truncate text-[0.55rem] font-semibold uppercase text-blue-600 sm:text-[0.6rem]">Pagadas</p>
+                  <p className="text-sm font-bold text-blue-700 sm:text-base">{paidReports}</p>
                 </div>
-                <div className="rounded-lg bg-emerald-50 p-2">
-                  <p className="text-[0.6rem] font-semibold uppercase text-emerald-600">Cerradas / Aprobadas</p>
-                  <p className="text-base font-bold text-emerald-700">{approvedReports}</p>
+                <div className="rounded-lg bg-emerald-50 px-1 py-2 sm:p-2">
+                  <p className="truncate text-[0.55rem] font-semibold uppercase text-emerald-600 sm:text-[0.6rem]">Aprobadas</p>
+                  <p className="text-sm font-bold text-emerald-700 sm:text-base">{approvedReports}</p>
                 </div>
-                <div className="rounded-lg bg-amber-50 p-2">
-                  <p className="text-[0.6rem] font-semibold uppercase text-amber-600">Pendientes</p>
-                  <p className="text-base font-bold text-amber-700">{pendingReports}</p>
+                <div className="rounded-lg bg-amber-50 px-1 py-2 sm:p-2">
+                  <p className="truncate text-[0.55rem] font-semibold uppercase text-amber-600 sm:text-[0.6rem]">Pendientes</p>
+                  <p className="text-sm font-bold text-amber-700 sm:text-base">{pendingReports}</p>
                 </div>
               </div>
 
               {/* Recent reports */}
               {empReports.length > 0 && (
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <p className="text-[0.65rem] font-semibold uppercase text-[var(--color-text-muted)]">
-                    Rendiciones recientes
+                    Resumen
                   </p>
                   <p className="text-[0.65rem] text-[var(--color-text-muted)]">
-                    Total de rendiciones: {empReports.length}. Pagadas: {paidReports}, cerradas/aprobadas: {approvedReports}, pendientes: {pendingReports}.
+                    {empReports.length} rendiciones · {paidReports} pagadas · {approvedReports} aprobadas · {pendingReports} pendientes
                   </p>
                 </div>
               )}
 
               {empReports.length === 0 && (
-                <p className="text-xs text-[var(--color-text-muted)] italic text-center py-2">
+                <p className="py-2 text-center text-xs italic text-[var(--color-text-muted)]">
                   Sin rendiciones aún.
                 </p>
               )}
