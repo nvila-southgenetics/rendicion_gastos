@@ -9,6 +9,7 @@ import type { Tables } from "@/types/database";
 import { submitReportAction } from "./submitReportAction";
 import { returnReportAction } from "./returnReportAction";
 import { approveReportAction } from "./approveReportAction";
+import { SubmitReportButton } from "@/components/reports/SubmitReportButton";
 
 type WeeklyReport = Tables<"weekly_reports">;
 type Expense      = Tables<"expenses">;
@@ -209,12 +210,7 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
         {isOwner && canEmployeeEditReport && (
           <form action={submitReportAction} className="w-full sm:ml-auto sm:w-auto">
             <input type="hidden" name="reportId" value={r.id} />
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[var(--color-primary)] px-3 py-1 text-center text-xs font-semibold text-white hover:bg-[var(--color-primary-dark)] sm:w-auto"
-            >
-              Cerrar y enviar rendición
-            </button>
+            <SubmitReportButton />
           </form>
         )}
       </div>

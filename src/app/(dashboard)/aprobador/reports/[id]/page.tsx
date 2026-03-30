@@ -6,6 +6,8 @@ import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
 import { approveReportAction } from "@/app/(dashboard)/reports/[id]/approveReportAction";
 import { returnReportAction } from "@/app/(dashboard)/reports/[id]/returnReportAction";
 import { PayReportModal } from "@/components/reports/PayReportModal";
+import { ApproveReportButton } from "@/components/reports/ApproveReportButton";
+import { ReturnReportButton } from "@/components/reports/ReturnReportButton";
 import { getMyProfile } from "@/lib/auth/getMyProfile";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -203,30 +205,12 @@ Volver
               {hasProblemExpenses && (
                 <form action={returnReportAction} className="w-full sm:w-auto">
                   <input type="hidden" name="reportId" value={report.id} />
-                  <button
-                    type="submit"
-                    className="w-full rounded-full bg-amber-100 px-3 py-1 text-center text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-200 sm:w-auto"
-                  >
-                    Devolver para corrección
-                  </button>
+                  <ReturnReportButton />
                 </form>
               )}
               <form action={approveReportAction} className="w-full sm:w-auto">
                 <input type="hidden" name="reportId" value={report.id} />
-                <button
-                  type="submit"
-                  disabled={!allExpensesApproved}
-                  className="w-full rounded-full bg-emerald-500 px-3 py-1 text-center text-xs font-semibold text-white transition-all hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                  title={
-                    !allExpensesApproved
-                      ? "Debes aprobar todos los gastos individuales primero"
-                      : "Aprobar Rendición Completa"
-                  }
-                >
-                  {allExpensesApproved
-                    ? "Aprobar rendición"
-                    : "Aprobar gastos pendientes..."}
-                </button>
+                <ApproveReportButton allExpensesApproved={allExpensesApproved} />
               </form>
             </>
           )}
