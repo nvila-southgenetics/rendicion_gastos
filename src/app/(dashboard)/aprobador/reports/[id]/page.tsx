@@ -250,47 +250,58 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
 
       {/* Información de pago */}
       {workflowStatus === "paid" && (
-        <div className="card p-4 space-y-2">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            Información de pago
-          </h2>
-          <div className="grid gap-2 text-xs text-[var(--color-text-primary)] sm:grid-cols-3">
+        <div className="card w-full overflow-hidden">
+          <div className="flex items-center gap-2.5 border-b border-[#f0ecf4] bg-blue-50/50 px-4 py-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
             <div>
-              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
-                Pagado el
+              <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Pago registrado</h2>
+              <p className="text-[0.65rem] text-[var(--color-text-muted)]">Esta rendición fue pagada correctamente.</p>
+            </div>
+          </div>
+          <div className="grid gap-px bg-[#f0ecf4] sm:grid-cols-3">
+            <div className="bg-white px-4 py-3">
+              <p className="flex items-center gap-1 text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Fecha de pago
               </p>
-              <p className="mt-0.5">
+              <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">
                 {report.payment_date
-                  ? new Date(report.payment_date + "T12:00:00").toLocaleDateString("es-UY")
+                  ? new Date(report.payment_date + "T12:00:00").toLocaleDateString("es-UY", { day: "numeric", month: "long", year: "numeric" })
                   : "—"}
               </p>
             </div>
-            <div>
-              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
+            <div className="bg-white px-4 py-3">
+              <p className="flex items-center gap-1 text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                 Monto pagado
               </p>
-              <p className="mt-0.5">
+              <p className="mt-1 text-sm font-bold text-blue-700">
                 {typeof report.amount_paid === "number"
                   ? `${budgetCurrency} ${fmt(Number(report.amount_paid))}`
                   : "—"}
               </p>
             </div>
-            <div>
-              <p className="text-[0.65rem] uppercase text-[var(--color-text-muted)]">
-                Método de pago
+            <div className="bg-white px-4 py-3">
+              <p className="flex items-center gap-1 text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                Medio de pago
               </p>
-              <p className="mt-0.5">{report.payment_destination || "—"}</p>
+              <p className="mt-1 text-sm font-semibold capitalize text-[var(--color-text-primary)]">{report.payment_destination || "—"}</p>
             </div>
           </div>
           {report.payment_receipt_url && (
-            <div className="pt-1">
+            <div className="border-t border-[#f0ecf4] px-4 py-3">
               <a
                 href={report.payment_receipt_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)]/20"
               >
-                Ver comprobante ↗
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg>
+                Ver comprobante
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             </div>
           )}

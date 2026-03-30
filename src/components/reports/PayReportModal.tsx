@@ -14,10 +14,30 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+      className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-70"
     >
-      {pending ? "Guardando..." : "Confirmar pago"}
+      {pending && (
+        <svg className="h-3.5 w-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      )}
+      {pending ? "Procesando pago..." : "Confirmar pago"}
     </button>
+  );
+}
+
+function FormOverlay() {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl bg-white/80 backdrop-blur-[2px]">
+      <div className="relative h-10 w-10">
+        <div className="absolute inset-0 animate-spin rounded-full border-[3px] border-blue-200 border-t-blue-600" />
+      </div>
+      <p className="text-sm font-semibold text-blue-700">Registrando pago...</p>
+      <p className="text-[0.7rem] text-[var(--color-text-muted)]">Subiendo comprobante, esto puede demorar unos segundos.</p>
+    </div>
   );
 }
 
@@ -72,7 +92,7 @@ export function PayReportModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#e5e2ea] bg-white p-5 shadow-xl">
+          <div className="relative w-full max-w-md space-y-4 rounded-2xl border border-[#e5e2ea] bg-white p-5 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <Dialog.Title className="text-sm font-semibold text-[var(--color-text-primary)]">
                 Registrar pago de rendición
@@ -82,7 +102,8 @@ export function PayReportModal({
               </Dialog.Close>
             </div>
 
-            <form action={formAction} className="space-y-3">
+            <form action={formAction} className="relative space-y-3">
+              <FormOverlay />
               <input type="hidden" name="reportId" value={reportId} />
 
               <div className="space-y-1">

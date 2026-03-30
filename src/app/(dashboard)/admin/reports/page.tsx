@@ -45,13 +45,34 @@ export default async function AdminReportsPage({
 
   return (
     <div className="w-full max-w-full space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-4">
         <BackButton href="/admin" />
-        <div className="min-w-0">
-          <h1 className="page-title">Rendiciones — Admin</h1>
-          <p className="page-subtitle">
-            {reports.length} rendiciones · {pendingCount} abiertas
-          </p>
+        <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-[var(--color-primary)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 18v-4"/><path d="M14 18v-2"/></svg>
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-base font-bold text-[var(--color-text-primary)] sm:text-lg">Rendiciones</h1>
+                <p className="text-xs text-[var(--color-text-muted)]">Panel de administración</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 sm:gap-4">
+            <div className="rounded-xl bg-[#f5f1f8] px-3 py-2 text-center">
+              <p className="text-lg font-bold text-[var(--color-primary)] sm:text-xl">{reports.length}</p>
+              <p className="text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">Total</p>
+            </div>
+            <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center">
+              <p className="text-lg font-bold text-emerald-600 sm:text-xl">{pendingCount}</p>
+              <p className="text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">Abiertas</p>
+            </div>
+            <div className="rounded-xl bg-gray-50 px-3 py-2 text-center">
+              <p className="text-lg font-bold text-gray-600 sm:text-xl">{reports.length - pendingCount}</p>
+              <p className="text-[0.6rem] font-semibold uppercase text-[var(--color-text-muted)]">Cerradas</p>
+            </div>
+          </div>
         </div>
       </div>
 

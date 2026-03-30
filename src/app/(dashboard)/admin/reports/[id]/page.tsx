@@ -94,7 +94,7 @@ export default async function AdminReportDetailPage({ params }: Props) {
     <div className="w-full max-w-full space-y-5">
       {/* Encabezado */}
       <div className="space-y-3">
-        <BackButton href="/dashboard/admin/reports" />
+        <BackButton href="/admin/reports" />
 
         <div className="min-w-0">
           <h1 className="page-title">

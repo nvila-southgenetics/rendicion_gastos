@@ -22,12 +22,14 @@ function ReportStatusBadge({
     ws === "submitted"
       ? "En revisión"
       : ws === "approved"
-        ? "Cerrada / Aprobada"
+        ? "Aprobada"
         : ws === "paid"
           ? "Pagada"
           : ws === "needs_correction"
-            ? "Devuelta al empleado"
-            : "Borrador";
+            ? "Devuelta"
+            : status === "closed"
+              ? "Cerrada"
+              : "Borrador";
 
   const badgeClasses =
     ws === "submitted"
@@ -38,21 +40,16 @@ function ReportStatusBadge({
           ? "bg-blue-100 text-blue-700"
           : ws === "needs_correction"
             ? "bg-rose-100 text-rose-700"
-            : "bg-gray-100 text-gray-700";
-
-  const closed = status === "closed";
+            : status === "closed"
+              ? "bg-purple-100 text-[var(--color-primary)]"
+              : "bg-gray-100 text-gray-700";
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
-      <span
-        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${badgeClasses}`}
-      >
-        {label}
-      </span>
-      <span className="text-[0.6rem] text-[var(--color-text-muted)]">
-        {closed ? "Estado interno: cerrada" : "Estado interno: abierta"}
-      </span>
-    </div>
+    <span
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${badgeClasses}`}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -75,8 +72,6 @@ export default async function ReportsPage() {
     .select("*, expenses(count)")
     .order("week_start", { ascending: false });
 
-  // Esta vista siempre muestra SOLO las rendiciones del usuario logueado,
-  // incluso si el rol es "chusmas" (auditoría va en /dashboard/chusma-view).
   const { data: reports } = await baseQuery.eq("user_id", session.user.id);
 
   return (
@@ -86,13 +81,13 @@ export default async function ReportsPage() {
           <h1 className="page-title">Rendiciones</h1>
           <p className="page-subtitle">Administrá tus períodos de gastos.</p>
         </div>
-        <Link href="/dashboard/reports/new" className="btn-primary w-full text-center text-sm sm:w-auto">
+        <Link href="/dashboard/reports/new" className="btn-primary btn-shimmer w-full text-center text-sm sm:w-auto">
           + Nueva rendición
         </Link>
       </div>
 
       {reports && reports.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {reports.map((report: WeeklyReport & { expenses: { count: number }[] }) => {
             const expenseCount = report.expenses?.[0]?.count ?? 0;
             const startDate = new Date(report.week_start + "T12:00:00");
@@ -101,14 +96,14 @@ export default async function ReportsPage() {
               <Link
                 key={report.id}
                 href={`/dashboard/reports/${report.id}`}
-                className="card flex w-full flex-col gap-3 p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                className="card group flex w-full items-center gap-3 p-3 transition-all hover:shadow-md sm:gap-4 sm:p-4"
               >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-lg">
-                    📋
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-[var(--color-primary)] transition-colors group-hover:bg-purple-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 18v-4"/><path d="M14 18v-2"/></svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+                    <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                       {report.title ?? (
                         <>
                           {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
@@ -117,46 +112,52 @@ export default async function ReportsPage() {
                         </>
                       )}
                     </p>
-                    <p className="text-xs text-[var(--color-text-muted)] break-words whitespace-normal">
+                    <ReportStatusBadge
+                      workflowStatus={report.workflow_status}
+                      status={report.status}
+                    />
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-xs text-[var(--color-text-muted)]">
+                    <span className="inline-flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                       {startDate.toLocaleDateString("es-UY", { day: "numeric", month: "short" })}
                       {" – "}
                       {endDate.toLocaleDateString("es-UY", { day: "numeric", month: "short", year: "numeric" })}
-                      {" · "}
-                      {expenseCount} {expenseCount === 1 ? "gasto" : "gastos"} ·{" "}
+                    </span>
+                    <span>·</span>
+                    <span>{expenseCount} {expenseCount === 1 ? "gasto" : "gastos"}</span>
+                    <span>·</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">
                       {Number(report.total_amount ?? 0).toLocaleString("es-UY", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}{" "}
                       UYU
-                    </p>
-                    {report.notes && (
-                      <p className="mt-0.5 text-xs text-[var(--color-text-muted)] truncate italic">
-                        {report.notes}
-                      </p>
-                    )}
+                    </span>
                   </div>
+                  {report.notes && (
+                    <p className="mt-0.5 truncate text-[0.7rem] italic text-[var(--color-text-muted)]">
+                      {report.notes}
+                    </p>
+                  )}
                 </div>
-                <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:shrink-0 sm:justify-start">
-                  <ReportStatusBadge
-                    workflowStatus={report.workflow_status}
-                    status={report.status}
-                  />
-                  <span className="text-[var(--color-text-muted)]">›</span>
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[var(--color-text-muted)] transition-transform group-hover:translate-x-0.5" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
               </Link>
             );
           })}
         </div>
       ) : (
         <div className="card flex flex-col items-center justify-center gap-3 py-14 text-center">
-          <div className="text-4xl">📋</div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-[var(--color-primary)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg>
+          </div>
           <p className="text-sm font-medium text-[var(--color-text-primary)]">
             Todavía no tenés rendiciones
           </p>
           <p className="text-xs text-[var(--color-text-muted)]">
             Creá una nueva rendición para empezar a cargar gastos.
           </p>
-          <Link href="/dashboard/reports/new" className="btn-primary mt-2 text-sm">
+          <Link href="/dashboard/reports/new" className="btn-primary btn-shimmer mt-2 text-sm">
             Crear primera rendición
           </Link>
         </div>
