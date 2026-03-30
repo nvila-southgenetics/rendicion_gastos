@@ -136,7 +136,7 @@ export default async function ChusmaViewPage({
           return (
             <Link
               key={r.id}
-              href={`/dashboard/reports/${r.id}`}
+              href={`/dashboard/viewer/reports/${r.id}`}
               className="card block w-full space-y-2 p-3 transition-colors hover:bg-[#fdfbff]"
             >
               <div className="flex min-w-0 items-start justify-between gap-2">
@@ -197,7 +197,7 @@ export default async function ChusmaViewPage({
                   >
                     <td className="px-4 py-3 align-middle">
                       <Link
-                        href={`/dashboard/reports/${r.id}`}
+                        href={`/dashboard/viewer/reports/${r.id}`}
                         className="font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-primary)]"
                       >
                         {r.title ?? "Sin título"}

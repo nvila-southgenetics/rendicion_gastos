@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { BackButton } from "@/components/ui/BackButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
@@ -117,19 +118,13 @@ export default async function AprobadorReportDetailPage({ params, searchParams }
   const startDate = new Date(report.week_start + "T12:00:00");
   const endDate   = new Date(report.week_end   + "T12:00:00");
 
+  const backHref = returnTo ?? "/dashboard/aprobador";
+
   return (
     <div className="w-full max-w-full space-y-5">
       {/* Header */}
       <div className="space-y-3">
-        <Link
-          href={returnTo ?? "/dashboard/aprobador"}
-          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          <span>
-Volver
-          </span>
-        </Link>
+        <BackButton href={backHref} />
         <div className="min-w-0">
           <h1 className="page-title break-words">
             {report.title ?? (

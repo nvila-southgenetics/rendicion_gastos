@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BackButton } from "@/components/ui/BackButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/auth/getMyProfile";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
@@ -113,17 +114,13 @@ export default async function ReportDetailPage({ params }: ReportDetailPageProps
     totalInBudgetCurrency > budgetMax
   );
 
+  const backHref = isChusma ? "/dashboard/chusma-view" : "/dashboard/reports";
+
   return (
     <div className="space-y-4">
       {/* Encabezado */}
       <div className="space-y-4">
-        <Link
-          href={isChusma ? "/dashboard/chusma-view" : "/dashboard/reports"}
-          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          <span>Volver</span>
-        </Link>
+        <BackButton href={backHref} />
 
         <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div className="min-w-0 flex-1">

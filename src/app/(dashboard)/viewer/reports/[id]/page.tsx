@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { BackButton } from "@/components/ui/BackButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ExpenseStatusBadge } from "@/components/expenses/ExpenseStatusBadge";
 import { toUSD, totalInCurrency, fmt } from "@/lib/currency";
@@ -31,7 +32,8 @@ export default async function ViewerReportDetailPage({ params }: Props) {
 
   const me = await getMyProfile(supabase, session);
   const isPagador = me?.role === "pagador";
-  if (me?.role !== "chusmas" && me?.role !== "admin" && !isPagador)
+  const isChusmaOrAdmin = me?.role === "chusmas" || me?.role === "admin";
+  if (!isChusmaOrAdmin && !isPagador)
     redirect("/dashboard");
 
   const [{ data: report }, { data: expenses }, { data: presets }] = await Promise.all([
@@ -92,21 +94,17 @@ export default async function ViewerReportDetailPage({ params }: Props) {
     | "approved"
     | "paid";
 
+  const backHref = isPagador
+    ? `/dashboard/viewer/employee/${report.user_id}`
+    : isChusmaOrAdmin
+      ? "/dashboard/chusma-view"
+      : "/dashboard/viewer";
+
   return (
     <div className="w-full max-w-full space-y-5">
       {/* Header */}
       <div className="space-y-3">
-        <Link
-          href={
-            isPagador
-              ? `/dashboard/viewer/employee/${report.user_id}`
-              : "/dashboard/viewer"
-          }
-          className="inline-flex items-center gap-1 rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-[0.7rem] font-semibold text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          <span>Volver</span>
-        </Link>
+        <BackButton href={backHref} />
         <div className="min-w-0">
           <h1 className="page-title break-words">
             {report.title ?? (
@@ -168,15 +166,24 @@ export default async function ViewerReportDetailPage({ params }: Props) {
             <PayReportModal reportId={report.id} suggestedAmount={totalInBudgetCurrency} />
           </div>
         )}
+        {(workflowStatus === "approved" || workflowStatus === "paid") && (
+          <a
+            href={`/api/reports/export?report_id=${report.id}`}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-[#e5e2ea] bg-white px-4 py-1.5 text-xs font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[#f5f1f8] sm:w-auto"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar Excel
+          </a>
+        )}
         {report.odoo_move_id && (me?.role === "chusmas" || me?.role === "admin") && (
           <a
             href={`https://southgenetics.odoo.com/web#id=${report.odoo_move_id}&cids=11&menu_id=304&action=430&model=account.move&view_type=form`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#71b340]/30 bg-[#71b340]/10 px-4 py-1.5 text-xs font-semibold text-[#4c7a2a] transition-colors hover:bg-[#71b340]/20 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#008784] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#006f6d] sm:w-auto"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 11h8"/><path d="M8 7h6"/></svg>
-            Ver Asiento Contable
+            Acceder a asiento
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         )}
