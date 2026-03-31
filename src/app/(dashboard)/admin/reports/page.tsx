@@ -6,6 +6,21 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/auth/getMyProfile";
 import { CountryFilter } from "@/components/admin/CountryFilter";
 
+const WORKFLOW_BADGE: Record<string, { label: string; classes: string }> = {
+  paid:             { label: "Pagada",              classes: "bg-blue-100 text-blue-700" },
+  approved:         { label: "Aprobada",            classes: "bg-emerald-100 text-emerald-700" },
+  submitted:        { label: "En revisión",         classes: "bg-amber-100 text-amber-700" },
+  needs_correction: { label: "Con correcciones",    classes: "bg-red-100 text-red-700" },
+  draft:            { label: "Borrador",            classes: "bg-gray-100 text-gray-500" },
+};
+
+function getStatusBadge(status: string, workflowStatus: string) {
+  if (status === "open" && workflowStatus === "draft") {
+    return { label: "Abierta", classes: "bg-emerald-100 text-emerald-700" };
+  }
+  return WORKFLOW_BADGE[workflowStatus] ?? { label: workflowStatus, classes: "bg-gray-100 text-gray-500" };
+}
+
 export default async function AdminReportsPage({
   searchParams,
 }: {
@@ -99,7 +114,7 @@ export default async function AdminReportsPage({
                 reports.map((r) => {
                   const user = r.profiles as { full_name: string; email: string; country?: string } | null;
                   const expenseCount = (r.expenses as { count: number }[])?.[0]?.count ?? 0;
-                  const isOpen = r.status === "open";
+                  const badge = getStatusBadge(r.status ?? "open", r.workflow_status ?? "draft");
                   return (
                     <tr key={r.id} className="border-t border-[#f0ecf4] transition-colors hover:bg-[#faf7fd]">
                       <td className="px-4 py-3 align-middle">
@@ -134,12 +149,8 @@ export default async function AdminReportsPage({
                         {expenseCount} {expenseCount === 1 ? "gasto" : "gastos"}
                       </td>
                       <td className="px-4 py-3 align-middle">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-                          isOpen
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-purple-100 text-[var(--color-primary)]"
-                        }`}>
-                          {isOpen ? "Abierta" : "Cerrada"}
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${badge.classes}`}>
+                          {badge.label}
                         </span>
                       </td>
                     </tr>
@@ -162,7 +173,7 @@ export default async function AdminReportsPage({
             reports.map((r) => {
               const user = r.profiles as { full_name: string; email: string; country?: string } | null;
               const expenseCount = (r.expenses as { count: number }[])?.[0]?.count ?? 0;
-              const isOpen = r.status === "open";
+              const badge = getStatusBadge(r.status ?? "open", r.workflow_status ?? "draft");
               return (
                 <Link
                   key={r.id}
@@ -177,12 +188,8 @@ export default async function AdminReportsPage({
                       <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                         {user?.full_name ?? "—"}
                       </p>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${
-                        isOpen
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-purple-100 text-[var(--color-primary)]"
-                      }`}>
-                        {isOpen ? "Abierta" : "Cerrada"}
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${badge.classes}`}>
+                        {badge.label}
                       </span>
                     </div>
                     {r.title && (

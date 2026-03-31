@@ -120,15 +120,20 @@ export default async function AdminReportDetailPage({ params }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${
-              isOpen
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-purple-100 text-[var(--color-primary)]"
-            }`}
-          >
-            {isOpen ? "Abierta" : "Cerrada"}
-          </span>
+          {(() => {
+            switch (workflowStatus) {
+              case "paid":
+                return <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-[0.7rem] font-semibold text-blue-700">Pagada</span>;
+              case "approved":
+                return <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[0.7rem] font-semibold text-emerald-700">Aprobada</span>;
+              case "submitted":
+                return <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-[0.7rem] font-semibold text-amber-700">En revisión</span>;
+              case "needs_correction":
+                return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-[0.7rem] font-semibold text-red-700">Con correcciones</span>;
+              default:
+                return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-semibold ${isOpen ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>{isOpen ? "Abierta" : "Borrador"}</span>;
+            }
+          })()}
           <a
             href={`/api/reports/export?report_id=${report.id}`}
             className="rounded-full border border-[#e5e2ea] bg-white px-3 py-1 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[#f5f1f8]"

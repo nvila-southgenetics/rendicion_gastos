@@ -99,12 +99,13 @@ export default async function AdminUsersPage({
     assignmentsBySupervisor[a.supervisor_id].push({ id: a.id, employee_id: a.employee_id, employee: emp });
   }
 
-  // Also find which supervisors supervise each user (for the employee's row)
+  const validSupervisorRoles = new Set(["aprobador", "supervisor"]);
   const supervisorsByEmployee: Record<string, string[]> = {};
   for (const a of allAssignments ?? []) {
-    if (!supervisorsByEmployee[a.employee_id]) supervisorsByEmployee[a.employee_id] = [];
     const sup = userList.find((u) => u.id === a.supervisor_id);
-    if (sup) supervisorsByEmployee[a.employee_id].push(sup.full_name);
+    if (!sup || !validSupervisorRoles.has(sup.role)) continue;
+    if (!supervisorsByEmployee[a.employee_id]) supervisorsByEmployee[a.employee_id] = [];
+    supervisorsByEmployee[a.employee_id].push(sup.full_name);
   }
 
   // Group assignments by viewer (chusmas)
