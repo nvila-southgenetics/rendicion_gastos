@@ -49,7 +49,8 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
   const [deleting, setDeleting]       = useState(false);
   const [employeeResponse, setEmployeeResponse] = useState(expense.employee_response ?? "");
 
-  const isLocked = expense.status === "approved";
+  // Temporal: permitir editar gasto (incl. monto) en cualquier estado
+  const isLocked = false;
   const isReviewing = expense.status === "reviewing";
   const isRejected = expense.status === "rejected";
   const canResubmit = isReviewing || isRejected;
@@ -96,14 +97,6 @@ export function EditExpenseForm({ expense }: EditExpenseFormProps) {
     if (latestError) {
       console.error("No se pudo leer el estado actual del gasto:", latestError);
       toast.error("No se pudo verificar el estado del gasto.");
-      setSaving(false);
-      return;
-    }
-
-    if (latest?.status === "pending" || latest?.status === "approved") {
-      toast.error(
-        "No podés editar un gasto que ya está pendiente de aprobación o aprobado.",
-      );
       setSaving(false);
       return;
     }

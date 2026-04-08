@@ -106,16 +106,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
 
   function handleFilesSelected(files: FileList | null) {
     if (!files) return;
-
-    // Solo se permite un comprobante por gasto (entre existentes y nuevos)
-    const currentCount = existing.length + uploaded.length;
-    if (currentCount >= 1) {
-      toast.error("Solo se permite un comprobante por gasto.");
-      return;
-    }
-
-    const first = Array.from(files)[0];
-    if (first) void uploadFile(first);
+    Array.from(files).forEach((file) => void uploadFile(file));
   }
 
   function removeUploaded(index: number) {
@@ -128,7 +119,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
 
   const uploadingCount = Object.keys(progress).length;
   const hasFiles       = existing.length > 0 || uploaded.length > 0;
-  const reachedLimit   = existing.length + uploaded.length >= 1;
+  const reachedLimit   = false; // temporal: sin límite de comprobantes
 
   return (
     <div className="space-y-3">
@@ -231,7 +222,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
       >
         <div>
           <p className="text-sm font-medium text-[var(--color-text-primary)]">
-            {hasFiles ? "Comprobante cargado" : "Arrastrá el comprobante aquí"}
+            {hasFiles ? "Podés agregar más comprobantes" : "Arrastrá los comprobantes aquí"}
           </p>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
             Imágenes (JPG, PNG, WEBP) o PDF · máx. 10 MB por archivo
@@ -239,7 +230,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
         </div>
 
         <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-          uploadingCount > 0 || reachedLimit
+          uploadingCount > 0
             ? "border-[#d4cfe0] bg-white text-[var(--color-text-muted)] cursor-not-allowed"
             : "border-[var(--color-primary)] text-[var(--color-primary)] bg-white hover:bg-[#faf5ff]"
         }`}>
@@ -247,15 +238,16 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
             ref={inputRef}
             type="file"
             accept="image/*,.jpg,.jpeg,.pdf,application/pdf,image/jpeg"
+            multiple
             className="hidden"
             onChange={(e) => handleFilesSelected(e.target.files)}
-            disabled={uploadingCount > 0 || reachedLimit}
+            disabled={uploadingCount > 0}
           />
           {uploadingCount > 0
-            ? `Subiendo comprobante…`
+            ? `Subiendo…`
             : hasFiles
-            ? "Reemplazar comprobante"
-            : "Seleccionar archivo"}
+            ? "Agregar más comprobantes"
+            : "Seleccionar archivo(s)"}
         </label>
       </div>
     </div>
