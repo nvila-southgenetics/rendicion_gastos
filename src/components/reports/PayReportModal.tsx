@@ -143,6 +143,8 @@ export function PayReportModal({
                     <option value="ARS">ARS — Peso argentino</option>
                     <option value="MXN">MXN — Peso mexicano</option>
                     <option value="CLP">CLP — Peso chileno</option>
+                    <option value="GTQ">GTQ — Quetzal guatemalteco</option>
+                    <option value="HNL">HNL — Lempira hondureño</option>
                   </select>
                 </div>
               </div>
@@ -167,7 +169,7 @@ export function PayReportModal({
                 <input
                   type="file"
                   name="receiptFile"
-                  accept="image/*,.pdf"
+                  accept="image/*,.jpg,.jpeg,.pdf,application/pdf,image/jpeg"
                   required
                   className="block w-full text-[0.7rem] text-[var(--color-text-muted)] file:mr-2 file:rounded-full file:border-0 file:bg-[var(--color-primary)] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-white hover:file:bg-[var(--color-primary-dark)]"
                 />

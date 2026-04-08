@@ -246,7 +246,7 @@ export function TicketUploader({ onUploadsChanged, existingUrls = [] }: TicketUp
           <input
             ref={inputRef}
             type="file"
-            accept="image/*,.pdf,application/pdf"
+            accept="image/*,.jpg,.jpeg,.pdf,application/pdf,image/jpeg"
             className="hidden"
             onChange={(e) => handleFilesSelected(e.target.files)}
             disabled={uploadingCount > 0 || reachedLimit}

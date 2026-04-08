@@ -27,6 +27,8 @@ const CURRENCIES = [
   { value: "ARS", label: "Peso argentino (ARS)" },
   { value: "MXN", label: "Peso mexicano (MXN)" },
   { value: "CLP", label: "Peso chileno (CLP)" },
+  { value: "GTQ", label: "Quetzal guatemalteco (GTQ)" },
+  { value: "HNL", label: "Lempira hondureño (HNL)" },
 ] as const;
 
 type SubmitState = "idle" | "saving" | "sending" | "success" | "error";

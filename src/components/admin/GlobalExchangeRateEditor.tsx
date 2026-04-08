@@ -12,6 +12,8 @@ const CURRENCY_LABELS: Record<string, string> = {
   BRL: "Real brasileño",
   MXN: "Peso mexicano",
   CLP: "Peso chileno",
+  GTQ: "Quetzal guatemalteco",
+  HNL: "Lempira hondureño",
   COP: "Peso colombiano",
 };
 
